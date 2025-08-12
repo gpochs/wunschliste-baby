@@ -192,10 +192,10 @@ export default function Wishlist() {
 
       {/* Verfügbare Items */}
       <div className="mb-16">
-        <CardHeader className="px-0 pb-6">
+          <CardHeader className="px-0 pb-6">
           <CardTitle className="text-3xl font-bold text-indigo-700 flex items-center justify-center gap-3">
             <Gift className="h-8 w-8" />
-            <span>Verfügbare Geschenke</span>
+            <span>Verfügbare Items</span>
             <span className="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full text-xl font-bold">
               {availableItems.length}
             </span>

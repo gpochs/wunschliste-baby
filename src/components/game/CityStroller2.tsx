@@ -25,7 +25,7 @@ enum TileType {
 interface GridPoint { x: number; y: number }
 
 interface Vehicle {
-  type: 'car' | 'moto' | 'scooter' | 'bike' | 'truck' | 'ambulance'
+  type: 'car' | 'moto' | 'scooter' | 'bike' | 'truck' | 'ambulance' | 'bus' | 'taxi' | 'police'
   speedTilesPerSecond: number
   path: GridPoint[]
   t: number
@@ -180,6 +180,20 @@ export default function CityStroller2() {
       {t:8,l:8,r:GRID_SIZE-9,b:GRID_SIZE-9},
     ]
     frames.forEach(f=>pushRect(f.t,f.l,f.r,f.b))
+
+    // Zusätzlich: alle kleinen Rechtecke zwischen benachbarten Straßenreihen/-spalten
+    const rows = [2,4,6,8,10,12,14,16]
+    const cols = [2,4,6,8,10,12,14,16]
+    for (let ri=0; ri<rows.length-1; ri++) {
+      for (let ci=0; ci<cols.length-1; ci++) {
+        const top = rows[ri]
+        const bottom = rows[ri+1]
+        const left = cols[ci]
+        const right = cols[ci+1]
+        // nur Rechtecke, die mindestens 2x2 groß sind
+        if (bottom-top>=2 && right-left>=2) pushRect(top,left,right,bottom)
+      }
+    }
     return loops
   },[])
 
@@ -191,13 +205,17 @@ export default function CityStroller2() {
       if (path.length===0) return
       all.push({ type, speedTilesPerSecond: speed, path, t: Math.random()*path.length })
     }
-    // Hohe Dichte
-    for(let i=0;i<16;i++) add('car', loops[(i)%loops.length]||perimeter, 4)
-    for(let i=0;i<10;i++) add('moto', loops[(i+2)%loops.length]||perimeter, 3)
-    for(let i=0;i<6;i++) add('scooter', loops[(i+1)%loops.length]||perimeter, 2)
-    for(let i=0;i<6;i++) add('bike', loops[(i+3)%loops.length]||perimeter, 2)
-    for(let i=0;i<4;i++) add('truck', perimeter, 2)
-    for(let i=0;i<4;i++) add('ambulance', loops[(i+4)%loops.length]||perimeter, 4)
+    // Hohe Dichte und Vielfalt
+    const L = Math.max(loops.length, 1)
+    for(let i=0;i<20;i++) add('car', loops[i%L]||perimeter, 4)
+    for(let i=0;i<12;i++) add('moto', loops[(i+2)%L]||perimeter, 3)
+    for(let i=0;i<8;i++) add('scooter', loops[(i+1)%L]||perimeter, 2)
+    for(let i=0;i<8;i++) add('bike', loops[(i+3)%L]||perimeter, 2)
+    for(let i=0;i<5;i++) add('truck', perimeter, 2)
+    for(let i=0;i<4;i++) add('ambulance', loops[(i+4)%L]||perimeter, 4)
+    for(let i=0;i<6;i++) add('bus', loops[(i+5)%L]||perimeter, 2)
+    for(let i=0;i<8;i++) add('taxi', loops[(i+6)%L]||perimeter, 4)
+    for(let i=0;i<5;i++) add('police', loops[(i+7)%L]||perimeter, 5)
     vehiclesRef.current = all
   },[buildLoops])
 
@@ -327,7 +345,15 @@ export default function CityStroller2() {
         ) : vHere ? (
           (()=>{
             const v = vehiclesRef.current.find(v=>{ const p=v.path[Math.floor(v.t)]; return p&&p.x===x&&p.y===y })
-            const icon = v?.type==='truck' ? '🚚' : v?.type==='ambulance' ? '🚑' : v?.type==='moto' ? '🏍️' : v?.type==='scooter' ? '🛴' : v?.type==='bike' ? '🚲' : '🚗'
+            const icon = v?.type==='truck' ? '🚚'
+              : v?.type==='ambulance' ? '🚑'
+              : v?.type==='bus' ? '🚌'
+              : v?.type==='taxi' ? '🚕'
+              : v?.type==='police' ? '🚓'
+              : v?.type==='moto' ? '🏍️'
+              : v?.type==='scooter' ? '🛴'
+              : v?.type==='bike' ? '🚲'
+              : '🚗'
             return <div className="text-sm" aria-label="Fahrzeug">{icon}</div>
           })()
         ) : content}
