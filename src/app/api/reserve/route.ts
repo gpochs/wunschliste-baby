@@ -4,6 +4,14 @@ import { resend } from '@/lib/resend'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Supabase is configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return NextResponse.json(
+        { error: 'Supabase nicht konfiguriert' },
+        { status: 500 }
+      )
+    }
+
     const { itemId, email } = await request.json()
 
     if (!itemId || !email) {
