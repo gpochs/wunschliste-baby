@@ -76,10 +76,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get from email from environment variable
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@ailiteracy.ch'
+
     // Send confirmation email to gifter
     try {
       await resend.emails.send({
-        from: 'Baby-Wunschliste <noreply@ihre-domain.de>',
+        from: `Baby-Wunschliste <${fromEmail}>`,
         to: [email],
         subject: `Bestätigung: ${item.item} reserviert`,
         html: `
@@ -109,35 +112,38 @@ export async function POST(request: NextRequest) {
       // Don't fail the reservation if email fails
     }
 
-    // Send notification email to parents (you can customize these emails)
-    try {
-      await resend.emails.send({
-        from: 'Baby-Wunschliste <noreply@ihre-domain.de>',
-        to: ['eltern@ihre-domain.de'], // Replace with actual parent emails
-        subject: `Neue Reservierung: ${item.item}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #ec4899;">🎁 Neue Geschenk-Reservierung!</h2>
-            <p>Hallo!</p>
-            <p>Jemand hat ein Item aus Ihrer Baby-Wunschliste reserviert:</p>
-            
-            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin-top: 0;">Reserviertes Item:</h3>
-              <p><strong>Item:</strong> ${item.item}</p>
-              ${item.size ? `<p><strong>Größe:</strong> ${item.size}</p>` : ''}
-              ${item.color ? `<p><strong>Farbe:</strong> ${item.color}</p>` : ''}
-              ${item.notes ? `<p><strong>Notizen:</strong> ${item.notes}</p>` : ''}
-              <p><strong>Reserviert von:</strong> ${email}</p>
-              <p><strong>Datum:</strong> ${new Date().toLocaleDateString('de-DE')}</p>
+    // Send notification email to parent (using PARENT_EMAIL_1)
+    const parentEmail = process.env.PARENT_EMAIL_1
+    if (parentEmail) {
+      try {
+        await resend.emails.send({
+          from: `Baby-Wunschliste <${fromEmail}>`,
+          to: [parentEmail],
+          subject: `Neue Reservierung: ${item.item}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #ec4899;">🎁 Neue Geschenk-Reservierung!</h2>
+              <p>Hallo!</p>
+              <p>Jemand hat ein Item aus Ihrer Baby-Wunschliste reserviert:</p>
+              
+              <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Reserviertes Item:</h3>
+                <p><strong>Item:</strong> ${item.item}</p>
+                ${item.size ? `<p><strong>Größe:</strong> ${item.size}</p>` : ''}
+                ${item.color ? `<p><strong>Farbe:</strong> ${item.color}</p>` : ''}
+                ${item.notes ? `<p><strong>Notizen:</strong> ${item.notes}</p>` : ''}
+                <p><strong>Reserviert von:</strong> ${email}</p>
+                <p><strong>Datum:</strong> ${new Date().toLocaleDateString('de-DE')}</p>
+              </div>
+              
+              <p>Das Item wurde automatisch als reserviert markiert.</p>
             </div>
-            
-            <p>Das Item wurde automatisch als reserviert markiert.</p>
-          </div>
-        `
-      })
-    } catch (emailError) {
-      console.error('Error sending notification email:', emailError)
-      // Don't fail the reservation if email fails
+          `
+        })
+      } catch (emailError) {
+        console.error('Error sending notification email:', emailError)
+        // Don't fail the reservation if email fails
+      }
     }
 
     return NextResponse.json({ success: true })
