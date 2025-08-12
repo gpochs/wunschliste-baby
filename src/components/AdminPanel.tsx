@@ -180,10 +180,10 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                   <span className="font-medium">Notizen:</span> {item.notes}
                 </p>
               )}
-              {item.reserved && item.reserved_by && (
+              {item.reserved && (
                 <p className="text-green-700 font-medium bg-green-50 px-3 py-2 rounded-lg inline-flex items-center gap-2">
                   <span>🎉</span>
-                  Reserviert von: {item.reserved_by}
+                  Geschenk ist reserviert
                 </p>
               )}
             </div>
@@ -279,7 +279,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="space-y-12">
         {/* Verfügbare Items */}
         <div>
           <CardHeader className="px-0 pb-6">

@@ -166,7 +166,7 @@ export default function Wishlist() {
         </h1>
         <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed">
           Hallo du Liebe! 🥰 Wähle ein Geschenk aus und reserviere es mit deiner E-Mail-Adresse. 
-          Wir freuen uns riesig über deine Unterstützung! 💕
+          Vielen Dank, dass du uns bei der Vorbereitung auf unser kleines Wunder unterstützen möchtest! 💕
         </p>
       </div>
 

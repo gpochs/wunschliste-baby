@@ -96,7 +96,7 @@ export default function ReserveDialog({ item, open, onOpenChange, onSuccess }: R
               className="border-2 border-blue-200 focus:border-violet-500 focus:ring-violet-500 text-lg p-3"
             />
             <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-              <span className="text-blue-600">💡</span> Du bekommst eine Bestätigung per E-Mail und wir werden über deine Reservierung informiert! 🎉
+              <span className="text-blue-600">💡</span> Du bekommst eine Bestätigung per E-Mail! 🎉
             </p>
           </div>
           
