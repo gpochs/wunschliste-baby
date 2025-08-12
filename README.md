@@ -10,6 +10,7 @@ Eine moderne Wunschlisten-App für Ihr Baby, gebaut mit Next.js 14, Supabase, Re
 - **Reservierungssystem**: Schenkende können Items reservieren und erhalten Bestätigungs-E-Mails
 - **E-Mail-Benachrichtigungen**: Automatische E-Mails an Schenkende und Eltern bei Reservierungen
 - **Responsive Design**: Moderne, benutzerfreundliche Oberfläche für alle Geräte
+- **Vollständig konfiguriert**: Supabase, Resend und Vercel sind eingerichtet! 🚀
 
 ## 🚀 Installation
 
