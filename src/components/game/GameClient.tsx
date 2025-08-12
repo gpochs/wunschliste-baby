@@ -27,7 +27,7 @@ export default function GameClient() {
           <span className="text-4xl">👶</span>
           <span className="text-4xl">🏙️</span>
         </div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 bg-clip-text text-transparent mb-4">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent mb-4">
           City Stroller
         </h1>
         <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed mb-6">

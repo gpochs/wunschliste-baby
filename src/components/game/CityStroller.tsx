@@ -486,14 +486,14 @@ export default function CityStroller() {
   return (
     <div className="relative">
       {/* Header mit Steuerung */}
-      <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 border-b border-amber-200">
+      <div className="bg-gradient-to-r from-indigo-50 to-violet-50 p-4 border-b border-indigo-200">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-amber-800">City Stroller</h3>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowOptions(!showOptions)}
-            className="border-amber-300 text-amber-700 hover:bg-amber-100"
+            className="border-violet-300 text-violet-700 hover:bg-violet-100"
           >
             <Settings className="h-4 w-4 mr-2" />
             Optionen
@@ -502,7 +502,7 @@ export default function CityStroller() {
 
         {/* Optionen-Panel */}
         {showOptions && (
-          <div className="bg-white rounded-lg p-4 shadow-md border border-amber-200 mb-4">
+          <div className="bg-white rounded-lg p-4 shadow-md border border-indigo-200 mb-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -518,7 +518,7 @@ export default function CityStroller() {
                     setTrafficDensity(Number(e.target.value))
                     setTimeout(initializeVehicles, 100)
                   }}
-                  className="w-full h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer"
+                  className="w-full h-2 bg-violet-200 rounded-lg appearance-none cursor-pointer"
                 />
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>40%</span>
@@ -533,7 +533,7 @@ export default function CityStroller() {
                     type="checkbox"
                     checked={reducedMotion}
                     onChange={(e) => setReducedMotion(e.target.checked)}
-                    className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                    className="rounded border-gray-300 text-violet-700 focus:ring-violet-500"
                   />
                   <span className="text-sm font-medium text-gray-700">Animationsarm</span>
                 </label>
