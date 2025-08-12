@@ -6,7 +6,8 @@ import { supabase } from '@/lib/supabase'
 import ReserveDialog from './ReserveDialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ExternalLink, Gift, CheckCircle } from 'lucide-react'
+import { ExternalLink, Gift, CheckCircle, Gamepad2 } from 'lucide-react'
+import Link from 'next/link'
 
 export default function Wishlist() {
   const [items, setItems] = useState<WishlistItem[]>([])
@@ -199,7 +200,7 @@ export default function Wishlist() {
 
       {/* Reservierte Items */}
       {reservedItems.length > 0 && (
-        <div>
+        <div className="mb-16">
           <CardHeader className="px-0 pb-6">
             <CardTitle className="text-3xl font-bold text-gray-600 flex items-center justify-center gap-3">
               <CheckCircle className="h-8 w-8" />
@@ -215,6 +216,25 @@ export default function Wishlist() {
           </div>
         </div>
       )}
+
+      {/* Spiel-Button */}
+      <div className="text-center mt-16">
+        <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <div className="text-4xl mb-4">🎮</div>
+            <h3 className="text-xl font-bold text-amber-800 mb-3">Lust auf eine kleine Pause?</h3>
+            <p className="text-amber-700 mb-6">
+              Spiele &quot;City Stroller&quot; - bringe den Kinderwagen sicher durch die Stadt! 🚗
+            </p>
+            <Link href="/game">
+              <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-6 py-3">
+                <Gamepad2 className="h-5 w-5 mr-2" />
+                Spiel spielen
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
 
       {selectedItem && (
         <ReserveDialog
