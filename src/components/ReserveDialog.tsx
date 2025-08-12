@@ -68,7 +68,7 @@ export default function ReserveDialog({ item, open, onOpenChange, onSuccess }: R
             Geschenk reservieren
           </DialogTitle>
           <DialogDescription className="text-gray-700 text-base">
-            Hallo du Liebe! 🥰 Reserviere dieses tolle Geschenk für unser Baby!
+            Hallo du Liebe:r! 🥰 Reserviere dieses tolle Geschenk für unser Baby!
           </DialogDescription>
         </DialogHeader>
         
