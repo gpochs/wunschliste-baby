@@ -56,6 +56,7 @@ export default function CityStroller() {
   const [showOptions, setShowOptions] = useState(false)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const specialIconsRef = useRef<Record<string, string>>({})
+  const decorIconsRef = useRef<Record<string, string>>({})
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   type LeaderboardEntry = { name: string; timeSeconds: number; dateIso: string }
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
@@ -81,8 +82,8 @@ export default function CityStroller() {
     }
 
     // Straßennetz (Stadt-Gitter + Loops)
-    const horizontalRows = [3, 6, 8, 9, 12, 13, GRID_SIZE - 4]
-    const verticalCols = [3, 5, 6, 9, 12, 14, GRID_SIZE - 4]
+    const horizontalRows = [2, 3, 5, 6, 8, 9, 11, 12, 13, 15, GRID_SIZE - 4]
+    const verticalCols = [2, 3, 5, 6, 8, 9, 11, 12, 14, 16, GRID_SIZE - 4]
     // Horizontale Straßen
     horizontalRows.forEach((row) => {
       for (let x = 2; x < GRID_SIZE - 2; x++) {
@@ -115,6 +116,19 @@ export default function CityStroller() {
     for (let y = 4; y <= GRID_SIZE - 5; y++) {
       if (y % 4 === 0) {
         map[y][10] = TileType.ROAD
+      }
+    }
+    // zusätzliche Querstraßen
+    for (let x = 4; x <= GRID_SIZE - 5; x++) {
+      if (x % 4 === 0) {
+        map[4][x] = TileType.ROAD
+        map[11][x] = TileType.ROAD
+      }
+    }
+    for (let y = 3; y <= GRID_SIZE - 6; y++) {
+      if (y % 5 === 0) {
+        map[y][7] = TileType.ROAD
+        map[y][13] = TileType.ROAD
       }
     }
 
@@ -176,6 +190,13 @@ export default function CityStroller() {
         map[pos.y][pos.x] = TileType.DECOR
       }
     })
+    // Deko-Icons variieren
+    const decorIconList = ['🚦','⛲','🅿️','🚏','🚌','☕','🍔','🏛️','🎡']
+    const dIconMap: Record<string, string> = {}
+    decorPositions.forEach((p, idx) => {
+      dIconMap[`${p.x},${p.y}`] = decorIconList[idx % decorIconList.length]
+    })
+    decorIconsRef.current = dIconMap
 
     // Zusätzliche Häuserblöcke (2x2 bzw. 3x2), sowie Schule/Spital/Mall/Stadion/Restaurant (als WALL-Cluster)
     const blockRects: Array<{ x: number; y: number; w: number; h: number }> = [
@@ -194,7 +215,11 @@ export default function CityStroller() {
       // Weitere Häuserzeilen
       { x: 3, y: 10, w: 2, h: 2 }, { x: 15, y: 6, w: 2, h: 2 },
       { x: 9, y: 15, w: 2, h: 2 }, { x: 4, y: 14, w: 2, h: 2 },
-      { x: 11, y: 14, w: 3, h: 2 }, { x: 15, y: 14, w: 2, h: 2 }
+      { x: 11, y: 14, w: 3, h: 2 }, { x: 15, y: 14, w: 2, h: 2 },
+      // dichtere Blöcke entlang neuer Achsen
+      { x: 5, y: 8, w: 2, h: 2 }, { x: 13, y: 9, w: 2, h: 2 },
+      { x: 7, y: 4, w: 2, h: 2 }, { x: 10, y: 5, w: 2, h: 2 },
+      { x: 16, y: 9, w: 2, h: 2 }, { x: 3, y: 6, w: 2, h: 2 }
     ]
     blockRects.forEach(r => {
       for (let yy = r.y; yy < r.y + r.h; yy++) {
@@ -228,7 +253,11 @@ export default function CityStroller() {
       { x: 16, y: 12, icon: '🚓' }, // Polizei
       { x: 7, y: 3, icon: '🎭' }, // Theater
       { x: 9, y: 6, icon: '🏛️' }, // Rathaus/Sehenswürdigkeit
-      { x: 12, y: 9, icon: '🧒' } // Kindergarten
+      { x: 12, y: 9, icon: '🧒' }, // Kindergarten
+      // weitere Icons für neue Häuserblöcke
+      { x: 5, y: 8, icon: '🏠' }, { x: 13, y: 9, icon: '🏢' },
+      { x: 7, y: 4, icon: '🏠' }, { x: 10, y: 5, icon: '🏢' },
+      { x: 16, y: 9, icon: '🏘️' }, { x: 3, y: 6, icon: '🏠' }
     ]
     const iconMap: Record<string, string> = {}
     iconAt.forEach(p => { iconMap[`${p.x},${p.y}`] = p.icon })
@@ -281,28 +310,53 @@ export default function CityStroller() {
 
   // Fahrzeuge initialisieren (fest definierte Anzahl, auf Loops)
   const initializeVehicles = useCallback(() => {
-    // Feste Anzahl entsprechend Spezifikation
+    // Höhere Dichte: einige Fahrzeuge explizit auf dem Perimeter-Loop
     const counts = {
-      car: 4,
-      moto: 3,
-      scooter: 2,
-      bike: 2
+      car: 6,
+      moto: 4,
+      scooter: 3,
+      bike: 3,
     }
 
     const loopPaths = buildLoopPaths()
+    const perimeter = loopPaths[0] || []
     const allVehicles: Vehicle[] = []
-    const types: Vehicle['type'][] = ['car', 'moto', 'scooter', 'bike']
 
-    types.forEach((type) => {
-      const count = counts[type]
-      for (let i = 0; i < count; i++) {
-        const path = loopPaths[(i + Math.floor(Math.random() * loopPaths.length)) % Math.max(1, loopPaths.length)] || []
-        if (path.length > 0) {
-          const speed = type === 'car' ? 4 : type === 'moto' ? 3 : 2
-          allVehicles.push({ type, speed, path, t: Math.random() * path.length, currentPathIndex: 0 })
-        }
+    const addVehicle = (type: Vehicle['type'], path: { x: number; y: number }[]) => {
+      if (path.length === 0) return
+      const speed = type === 'car' ? 4 : type === 'moto' ? 3 : 2
+      allVehicles.push({ type, speed, path, t: Math.random() * path.length, currentPathIndex: 0 })
+    }
+
+    // Autos: Hälfte explizit am Rand (Perimeter), Rest zufällig auf Loops
+    for (let i = 0; i < counts.car; i++) {
+      if (perimeter.length > 0 && i < Math.ceil(counts.car / 2)) {
+        addVehicle('car', perimeter)
+      } else {
+        const p = loopPaths[(i + Math.floor(Math.random() * loopPaths.length)) % Math.max(1, loopPaths.length)] || []
+        addVehicle('car', p)
       }
-    })
+    }
+
+    // Motorräder: ein Teil am Rand
+    for (let i = 0; i < counts.moto; i++) {
+      if (perimeter.length > 0 && i < 2) {
+        addVehicle('moto', perimeter)
+      } else {
+        const p = loopPaths[(i + 2 + Math.floor(Math.random() * loopPaths.length)) % Math.max(1, loopPaths.length)] || []
+        addVehicle('moto', p)
+      }
+    }
+
+    // Scooter und Bikes zufällig verteilt
+    for (let i = 0; i < counts.scooter; i++) {
+      const p = loopPaths[(i + 1 + Math.floor(Math.random() * loopPaths.length)) % Math.max(1, loopPaths.length)] || []
+      addVehicle('scooter', p)
+    }
+    for (let i = 0; i < counts.bike; i++) {
+      const p = loopPaths[(i + 3 + Math.floor(Math.random() * loopPaths.length)) % Math.max(1, loopPaths.length)] || []
+      addVehicle('bike', p)
+    }
 
     vehiclesRef.current = allVehicles
   }, [buildLoopPaths])
@@ -614,19 +668,20 @@ export default function CityStroller() {
             <h2 className="text-3xl font-bold mb-2">Gewonnen!</h2>
             <p className="text-lg mb-4">Zeit: <span className="font-mono">{formatTime(elapsedSeconds)}</span></p>
             <div className="bg-white/10 rounded-lg p-4 text-left mb-4">
-              <label className="block text-sm mb-2" htmlFor="playerName">Dein Name (für die Rangliste)</label>
+              <label className="block text-sm mb-2 text-white font-medium" htmlFor="playerName">Dein Name (für die Rangliste)</label>
               <input
                 id="playerName"
                 value={playerName}
                 onChange={(e) => setPlayerName(e.target.value)}
-                className="w-full rounded-md px-3 py-2 text-gray-900"
+                className="w-full rounded-md px-3 py-2 text-gray-900 bg-white border-2 border-indigo-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-300 text-base placeholder:text-gray-500"
                 placeholder="z. B. Alex"
                 aria-label="Name für Rangliste"
                 required
                 aria-required="true"
+                aria-describedby="leaderboard-name-help"
               />
               {!canSave && (
-                <p className="mt-2 text-xs text-white/80">Bitte gib deinen Namen ein, um in die Rangliste aufgenommen zu werden.</p>
+                <p id="leaderboard-name-help" className="mt-2 text-sm text-white font-medium">Bitte gib deinen Namen ein, um in die Rangliste aufgenommen zu werden.</p>
               )}
             </div>
             <div className="flex flex-wrap justify-center gap-3">
