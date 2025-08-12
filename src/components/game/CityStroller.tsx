@@ -54,6 +54,11 @@ export default function CityStroller() {
   const [trafficDensity, setTrafficDensity] = useState(100)
   const [reducedMotion, setReducedMotion] = useState(false)
   const [showOptions, setShowOptions] = useState(false)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  type LeaderboardEntry = { name: string; timeSeconds: number; dateIso: string }
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [playerName, setPlayerName] = useState('')
   
   const vehiclesRef = useRef<Vehicle[]>([])
   const animationFrameRef = useRef<number>(0)
@@ -117,34 +122,54 @@ export default function CityStroller() {
       }
     })
 
-    // Wald (3 Tiles)
-    const forestPositions = [
-      { x: 4, y: 8 },
-      { x: 5, y: 8 },
-      { x: 4, y: 9 }
+    // Mehrere Wald-Cluster (je 3 Tiles)
+    const forestClusters = [
+      [ { x: 4, y: 8 }, { x: 5, y: 8 }, { x: 4, y: 9 } ],
+      [ { x: 13, y: 6 }, { x: 14, y: 6 }, { x: 13, y: 7 } ],
+      [ { x: 7, y: 14 }, { x: 8, y: 14 }, { x: 7, y: 15 } ]
     ]
-    
-    forestPositions.forEach(pos => {
-      if (map[pos.y] && map[pos.y][pos.x] === TileType.EMPTY) {
-        map[pos.y][pos.x] = TileType.TREE
-      }
+    forestClusters.forEach(cluster => {
+      cluster.forEach(pos => {
+        if (map[pos.y] && map[pos.y][pos.x] === TileType.EMPTY) {
+          map[pos.y][pos.x] = TileType.TREE
+        }
+      })
     })
 
     // Dekorationen (Ampeln, Sehenswürdigkeiten – nicht blockierend)
     const decorPositions = [
-      { x: 3, y: 3 },
-      { x: 6, y: 6 },
-      { x: 9, y: 9 },
-      { x: 12, y: 12 },
-      { x: 3, y: GRID_SIZE - 4 },
-      { x: GRID_SIZE - 4, y: 3 },
-      { x: 9, y: 3 },
-      { x: 12, y: GRID_SIZE - 4 }
+      { x: 3, y: 3 }, { x: 6, y: 6 }, { x: 9, y: 9 }, { x: 12, y: 12 },
+      { x: 3, y: GRID_SIZE - 4 }, { x: GRID_SIZE - 4, y: 3 },
+      { x: 9, y: 3 }, { x: 12, y: GRID_SIZE - 4 },
+      { x: 6, y: 9 }, { x: 9, y: 6 }, { x: 12, y: 9 }, { x: 9, y: 12 }
     ]
     
     decorPositions.forEach(pos => {
       if (map[pos.y] && map[pos.y][pos.x] === TileType.EMPTY) {
         map[pos.y][pos.x] = TileType.DECOR
+      }
+    })
+
+    // Zusätzliche Häuserblöcke (2x2 bzw. 3x2), sowie Schule/Spital/Mall/Stadion (als WALL-Cluster)
+    const blockRects: Array<{ x: number; y: number; w: number; h: number }> = [
+      { x: 5, y: 4, w: 2, h: 2 }, { x: 7, y: 10, w: 3, h: 2 },
+      { x: 12, y: 8, w: 2, h: 2 }, { x: 14, y: 12, w: 3, h: 2 },
+      // Schule
+      { x: 4, y: 6, w: 3, h: 2 },
+      // Krankenhaus
+      { x: 10, y: 12, w: 3, h: 2 },
+      // Einkaufszentrum
+      { x: 12, y: 4, w: 3, h: 3 },
+      // Stadium
+      { x: 6, y: 12, w: 4, h: 3 }
+    ]
+    blockRects.forEach(r => {
+      for (let yy = r.y; yy < r.y + r.h; yy++) {
+        for (let xx = r.x; xx < r.x + r.w; xx++) {
+          if (map[yy] && map[yy][xx] === TileType.EMPTY) {
+            map[yy][xx] = TileType.WALL
+          }
+        }
       }
     })
 
@@ -175,12 +200,12 @@ export default function CityStroller() {
 
   // Fahrzeuge initialisieren (fest definierte Anzahl, auf Loops)
   const initializeVehicles = useCallback(() => {
-    const density = trafficDensity / 100
+    // Feste Anzahl entsprechend Spezifikation
     const counts = {
-      car: Math.max(0, Math.round(3 * density)),
-      moto: Math.max(0, Math.round(2 * density)),
-      scooter: Math.max(0, Math.round(2 * density)),
-      bike: Math.max(0, Math.round(2 * density))
+      car: 3,
+      moto: 2,
+      scooter: 2,
+      bike: 2
     }
 
     const loopPaths = buildLoopPaths()
@@ -199,7 +224,7 @@ export default function CityStroller() {
     })
 
     vehiclesRef.current = allVehicles
-  }, [buildLoopPaths, trafficDensity])
+  }, [buildLoopPaths])
 
   // Spiel neu starten
   const restartGame = () => {
@@ -207,6 +232,8 @@ export default function CityStroller() {
     setStrollerPos(START_POSITION)
     setCityMap(buildCityMap())
     vehiclesRef.current = []
+    setElapsedSeconds(0)
+    setPlayerName('')
     
     // Kurz warten, dann Fahrzeuge initialisieren
     setTimeout(() => {
@@ -305,6 +332,9 @@ export default function CityStroller() {
         }
       })
 
+      // Timer fortschreiben
+      setElapsedSeconds(prev => prev + deltaTime)
+
       if (gameStatus === 'playing') {
         animationFrameRef.current = requestAnimationFrame(gameLoop)
       }
@@ -341,6 +371,42 @@ export default function CityStroller() {
     }
   }, [])
 
+  // Leaderboard laden
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('cityStrollerLeaderboard')
+      if (raw) {
+        const parsed = JSON.parse(raw) as LeaderboardEntry[]
+        setLeaderboard(parsed)
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const saveLeaderboard = (entries: LeaderboardEntry[]) => {
+    setLeaderboard(entries)
+    try {
+      localStorage.setItem('cityStrollerLeaderboard', JSON.stringify(entries))
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleSaveScore = () => {
+    const name = playerName.trim() || 'Gast'
+    const entries = [...leaderboard, { name, timeSeconds: elapsedSeconds, dateIso: new Date().toISOString() }]
+    entries.sort((a, b) => a.timeSeconds - b.timeSeconds)
+    saveLeaderboard(entries.slice(0, 10))
+  }
+
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60)
+    const s = Math.floor(secs % 60)
+    const ms = Math.floor((secs - Math.floor(secs)) * 1000)
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms).padStart(3, '0')}`
+  }
+
   // Tile rendern
   const renderTile = (x: number, y: number) => {
     const tileType = cityMap[y]?.[x] || TileType.EMPTY
@@ -372,7 +438,7 @@ export default function CityStroller() {
         break
       case TileType.GOAL:
         tileClass = 'bg-amber-300 border border-amber-500 shadow-lg'
-        tileContent = '🏠'
+        tileContent = '🏡'
         break
       case TileType.DECOR:
         tileClass = 'bg-blue-200 border border-blue-300'
@@ -414,7 +480,16 @@ export default function CityStroller() {
             <path d="M6 11 Q10 3 18 8" fill="#60a5fa" />
           </svg>
         ) : isVehicleHere ? (
-          <div className="text-sm" aria-label="Fahrzeug">🚗</div>
+          (() => {
+            // Bestimme ein Fahrzeugsymbol je nach Typ
+            const v = vehiclesRef.current.find(vehicle => {
+              const idx = Math.floor(vehicle.t)
+              const pos = vehicle.path[idx]
+              return pos && pos.x === x && pos.y === y
+            })
+            const icon = v?.type === 'moto' ? '🏍️' : v?.type === 'scooter' ? '🛴' : v?.type === 'bike' ? '🚲' : '🚗'
+            return <div className="text-sm" aria-label="Fahrzeug">{icon}</div>
+          })()
         ) : (
           tileContent
         )}
@@ -450,15 +525,31 @@ export default function CityStroller() {
   const renderGameStatus = () => {
     if (gameStatus === 'win') {
       return (
-        <div className="absolute inset-0 bg-violet-600/90 flex items-center justify-center z-10">
-          <div className="text-center text-white">
+        <div className="absolute inset-0 bg-violet-600/90 flex items-center justify-center z-10 p-4">
+          <div className="text-center text-white max-w-md w-full">
             <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-3xl font-bold mb-4">Gewonnen!</h2>
-            <p className="text-xl mb-6">Du hast den Kinderwagen sicher ans Ziel gebracht!</p>
-            <Button onClick={restartGame} size="lg" className="bg-white text-violet-700 hover:bg-gray-100">
-              <RotateCcw className="h-5 w-5 mr-2" />
-              Nochmal spielen
-            </Button>
+            <h2 className="text-3xl font-bold mb-2">Gewonnen!</h2>
+            <p className="text-lg mb-4">Zeit: <span className="font-mono">{formatTime(elapsedSeconds)}</span></p>
+            <div className="bg-white/10 rounded-lg p-4 text-left mb-4">
+              <label className="block text-sm mb-2" htmlFor="playerName">Dein Name (für die Rangliste)</label>
+              <input
+                id="playerName"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                className="w-full rounded-md px-3 py-2 text-gray-900"
+                placeholder="z. B. Alex"
+                aria-label="Name für Rangliste"
+              />
+            </div>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button onClick={handleSaveScore} size="lg" className="bg-white text-violet-700 hover:bg-gray-100">
+                Zur Rangliste speichern
+              </Button>
+              <Button onClick={restartGame} size="lg" className="bg-white text-violet-700 hover:bg-gray-100">
+                <RotateCcw className="h-5 w-5 mr-2" />
+                Nochmal spielen
+              </Button>
+            </div>
           </div>
         </div>
       )
@@ -488,7 +579,7 @@ export default function CityStroller() {
       {/* Header mit Steuerung */}
       <div className="bg-gradient-to-r from-indigo-50 to-violet-50 p-4 border-b border-indigo-200">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-amber-800">City Stroller</h3>
+          <h3 className="text-lg font-semibold text-indigo-800">City Stroller</h3>
           <Button
             variant="outline"
             size="sm"
@@ -498,6 +589,12 @@ export default function CityStroller() {
             <Settings className="h-4 w-4 mr-2" />
             Optionen
           </Button>
+        </div>
+
+        {/* Timer */}
+        <div className="flex items-center justify-center mb-2">
+          <span className="text-sm text-gray-700">Zeit: </span>
+          <span className="ml-2 font-mono text-indigo-800 text-base" aria-live="polite" aria-atomic="true">{formatTime(elapsedSeconds)}</span>
         </div>
 
         {/* Optionen-Panel */}
@@ -546,8 +643,51 @@ export default function CityStroller() {
         {renderLegend()}
       </div>
 
+      {/* Rangliste */}
+      <div className="bg-white border border-gray-200 rounded-lg mt-4 p-4">
+        <h4 className="text-base font-semibold text-indigo-800 mb-2">Rangliste – Bestzeiten</h4>
+        {leaderboard.length === 0 ? (
+          <p className="text-sm text-gray-600">Noch keine Einträge. Spiele und sichere dir den ersten Platz! 🏆</p>
+        ) : (
+          <ol className="space-y-1">
+            {leaderboard.map((entry, idx) => (
+              <li key={`${entry.name}-${entry.dateIso}-${idx}`} className="flex items-center justify-between text-sm">
+                <span className="text-gray-700">
+                  <span className="inline-block w-6 text-right mr-2">{idx + 1}.</span>
+                  <span className="font-medium">{entry.name}</span>
+                </span>
+                <span className="font-mono text-indigo-700">{formatTime(entry.timeSeconds)}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+
       {/* Spiel-Grid */}
-      <div className="relative bg-white p-4">
+      <div
+        className="relative bg-white p-4"
+        onTouchStart={(e) => {
+          const t = e.touches[0]
+          touchStartRef.current = { x: t.clientX, y: t.clientY }
+        }}
+        onTouchEnd={(e) => {
+          const start = touchStartRef.current
+          if (!start) return
+          const t = e.changedTouches[0]
+          const dx = t.clientX - start.x
+          const dy = t.clientY - start.y
+          const absX = Math.abs(dx)
+          const absY = Math.abs(dy)
+          const threshold = 24 // px
+          if (absX < threshold && absY < threshold) return
+          if (absX > absY) {
+            moveStroller(dx > 0 ? 1 : -1, 0)
+          } else {
+            moveStroller(0, dy > 0 ? 1 : -1)
+          }
+          touchStartRef.current = null
+        }}
+      >
         <div
           className="grid gap-0 mx-auto border-2 border-gray-300 rounded-lg overflow-hidden"
           style={{
