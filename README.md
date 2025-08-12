@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🍼 Baby-Wunschlisten-App
 
-## Getting Started
+Eine moderne Wunschlisten-App für Ihr Baby, gebaut mit Next.js 14, Supabase, Resend und Vercel.
 
-First, run the development server:
+## ✨ Features
 
+- **Öffentliche Wunschliste**: Schenkende können die Wunschliste einsehen und Items reservieren
+- **Admin-Bereich**: Passwortgeschützter Bereich für Eltern zum Verwalten der Wunschliste
+- **Item-Verwaltung**: Items mit Name, Größe, Farbe, Website und Notizen hinzufügen/bearbeiten
+- **Reservierungssystem**: Schenkende können Items reservieren und erhalten Bestätigungs-E-Mails
+- **E-Mail-Benachrichtigungen**: Automatische E-Mails an Schenkende und Eltern bei Reservierungen
+- **Responsive Design**: Moderne, benutzerfreundliche Oberfläche für alle Geräte
+
+## 🚀 Installation
+
+### 1. Repository klonen
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd wunschliste-baby
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Abhängigkeiten installieren
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Umgebungsvariablen konfigurieren
+Kopieren Sie `env.example` zu `.env.local` und füllen Sie die Werte aus:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp env.example .env.local
+```
 
-## Learn More
+Bearbeiten Sie `.env.local`:
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
-To learn more about Next.js, take a look at the following resources:
+# Resend
+RESEND_API_KEY=your_resend_api_key
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Admin Password
+ADMIN_PASSWORD=baby25
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 4. Supabase einrichten
 
-## Deploy on Vercel
+1. Erstellen Sie ein Projekt auf [supabase.com](https://supabase.com)
+2. Gehen Sie zu SQL Editor
+3. Führen Sie den Inhalt von `supabase-setup.sql` aus
+4. Kopieren Sie die URL und den anon key in Ihre `.env.local`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 5. Resend einrichten
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Erstellen Sie ein Konto auf [resend.com](https://resend.com)
+2. Erstellen Sie einen API-Key
+3. Kopieren Sie den API-Key in Ihre `.env.local`
+4. Aktualisieren Sie die E-Mail-Adressen in `src/app/api/reserve/route.ts`
+
+### 6. Entwicklungsserver starten
+```bash
+npm run dev
+```
+
+Die App ist jetzt unter [http://localhost:3000](http://localhost:3000) verfügbar.
+
+## 📱 Verwendung
+
+### Öffentliche Wunschliste
+- Besuchen Sie die Hauptseite der App
+- Schenkende können alle Items einsehen
+- Klicken Sie auf "Reservieren" um ein Item zu reservieren
+- Geben Sie Ihre E-Mail-Adresse ein
+- Sie erhalten eine Bestätigungs-E-Mail
+
+### Admin-Bereich
+- Klicken Sie auf "Admin" in der Navigation
+- Geben Sie das Passwort ein: `baby25`
+- Fügen Sie neue Items hinzu
+- Bearbeiten oder löschen Sie bestehende Items
+- Markieren Sie Items als reserviert/frei
+
+## 🏗️ Technologie-Stack
+
+- **Frontend**: Next.js 14, React 19, TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui
+- **Datenbank**: Supabase (PostgreSQL)
+- **E-Mail**: Resend
+- **Deployment**: Vercel
+- **Authentifizierung**: Passwort-basierte Admin-Authentifizierung
+
+## 📁 Projektstruktur
+
+```
+src/
+├── app/
+│   ├── api/reserve/     # API-Route für Reservierungen
+│   ├── admin/           # Admin-Seite
+│   ├── globals.css      # Globale Styles
+│   ├── layout.tsx       # Root Layout
+│   └── page.tsx         # Hauptseite
+├── components/
+│   ├── ui/              # shadcn/ui Komponenten
+│   ├── AdminPanel.tsx   # Admin-Verwaltung
+│   ├── AddItemDialog.tsx # Item hinzufügen/bearbeiten
+│   ├── Header.tsx       # Navigation
+│   ├── LoginForm.tsx    # Admin-Login
+│   ├── ReserveDialog.tsx # Reservierungs-Dialog
+│   └── Wishlist.tsx     # Wunschlisten-Anzeige
+└── lib/
+    ├── supabase.ts      # Supabase-Konfiguration
+    ├── resend.ts        # Resend-Konfiguration
+    └── types.ts         # TypeScript-Typen
+```
+
+## 🚀 Deployment auf Vercel
+
+1. Verbinden Sie Ihr Repository mit Vercel
+2. Fügen Sie alle Umgebungsvariablen in Vercel hinzu
+3. Deployen Sie die App
+
+## 🔧 Anpassungen
+
+### Admin-Passwort ändern
+Ändern Sie den Wert von `ADMIN_PASSWORD` in `.env.local` und aktualisieren Sie den Code in `src/app/admin/page.tsx`.
+
+### E-Mail-Templates anpassen
+Bearbeiten Sie die E-Mail-Templates in `src/app/api/reserve/route.ts`.
+
+### Styling anpassen
+Bearbeiten Sie die Tailwind-Klassen in den Komponenten oder passen Sie `src/app/globals.css` an.
+
+## 📞 Support
+
+Bei Fragen oder Problemen erstellen Sie ein Issue im Repository oder kontaktieren Sie uns.
+
+## 📄 Lizenz
+
+Dieses Projekt ist für den persönlichen Gebrauch bestimmt.
