@@ -55,6 +55,7 @@ export default function CityStroller() {
   const [reducedMotion, setReducedMotion] = useState(false)
   const [showOptions, setShowOptions] = useState(false)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const specialIconsRef = useRef<Record<string, string>>({})
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   type LeaderboardEntry = { name: string; timeSeconds: number; dateIso: string }
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
@@ -93,6 +94,16 @@ export default function CityStroller() {
         map[y][col] = TileType.ROAD
       }
     })
+
+    // Perimeter-Ringstraße (befahrbar) direkt innerhalb der Außenmauer
+    for (let x = 1; x < GRID_SIZE - 1; x++) {
+      map[1][x] = TileType.ROAD
+      map[GRID_SIZE - 2][x] = TileType.ROAD
+    }
+    for (let y = 1; y < GRID_SIZE - 1; y++) {
+      map[y][1] = TileType.ROAD
+      map[y][GRID_SIZE - 2] = TileType.ROAD
+    }
 
     // Ziel (2x2)
     map[GOAL_POSITION.y][GOAL_POSITION.x] = TileType.GOAL
@@ -150,7 +161,7 @@ export default function CityStroller() {
       }
     })
 
-    // Zusätzliche Häuserblöcke (2x2 bzw. 3x2), sowie Schule/Spital/Mall/Stadion (als WALL-Cluster)
+    // Zusätzliche Häuserblöcke (2x2 bzw. 3x2), sowie Schule/Spital/Mall/Stadion/Restaurant (als WALL-Cluster)
     const blockRects: Array<{ x: number; y: number; w: number; h: number }> = [
       { x: 5, y: 4, w: 2, h: 2 }, { x: 7, y: 10, w: 3, h: 2 },
       { x: 12, y: 8, w: 2, h: 2 }, { x: 14, y: 12, w: 3, h: 2 },
@@ -161,7 +172,9 @@ export default function CityStroller() {
       // Einkaufszentrum
       { x: 12, y: 4, w: 3, h: 3 },
       // Stadium
-      { x: 6, y: 12, w: 4, h: 3 }
+      { x: 6, y: 12, w: 4, h: 3 },
+      // Restaurant (kleiner Block)
+      { x: 8, y: 6, w: 2, h: 2 }
     ]
     blockRects.forEach(r => {
       for (let yy = r.y; yy < r.y + r.h; yy++) {
@@ -173,6 +186,42 @@ export default function CityStroller() {
       }
     })
 
+    // Spezielle Icons pro Block (zierend, nicht funktional)
+    const iconAt: Array<{ x: number; y: number; icon: string }> = [
+      { x: 5, y: 4, icon: '🏘️' }, // Häuserblock
+      { x: 7, y: 10, icon: '🏢' },
+      { x: 12, y: 8, icon: '🏙️' },
+      { x: 14, y: 12, icon: '🏬' }, // Mall
+      { x: 4, y: 6, icon: '🏫' }, // Schule
+      { x: 10, y: 12, icon: '🏥' }, // Krankenhaus
+      { x: 12, y: 4, icon: '🛍️' }, // Einkaufszentrum
+      { x: 6, y: 12, icon: '🏟️' }, // Stadium
+      { x: 8, y: 6, icon: '🍽️' }, // Restaurant
+      // ein paar Highlights
+      { x: 15, y: 10, icon: '⛪' }
+    ]
+    const iconMap: Record<string, string> = {}
+    iconAt.forEach(p => { iconMap[`${p.x},${p.y}`] = p.icon })
+    specialIconsRef.current = iconMap
+
+    // Zaun/Fence um das Zielgebiet, sodass der Perimeter allein nicht reicht
+    const fence = [
+      // oberhalb/unterhalb und seitlich um das Ziel, mit einer inneren Öffnung Richtung Mitte
+      ...Array.from({ length: 5 }, (_, i) => ({ x: GOAL_POSITION.x - 1 + i, y: GOAL_POSITION.y - 1 })),
+      ...Array.from({ length: 5 }, (_, i) => ({ x: GOAL_POSITION.x - 1 + i, y: GOAL_POSITION.y + 2 })),
+      { x: GOAL_POSITION.x - 1, y: GOAL_POSITION.y },
+      { x: GOAL_POSITION.x - 1, y: GOAL_POSITION.y + 1 },
+      { x: GOAL_POSITION.x + 3, y: GOAL_POSITION.y },
+      { x: GOAL_POSITION.x + 3, y: GOAL_POSITION.y + 1 },
+    ]
+    fence.forEach(({ x, y }) => {
+      if (map[y] && map[y][x] === TileType.EMPTY) {
+        map[y][x] = TileType.WALL
+      }
+    })
+    // Öffnung nach innen (Labyrinth-Zugang)
+    map[GOAL_POSITION.y - 1][GOAL_POSITION.x + 1] = TileType.EMPTY
+
     return map
   }, [])
 
@@ -180,6 +229,8 @@ export default function CityStroller() {
   const buildLoopPaths = useCallback((): { x: number; y: number }[][] => {
     const loops: { x: number; y: number }[][] = []
     const rings = [
+      // Perimeter-Loop (direkt innerhalb der Außenmauern)
+      { top: 1, left: 1, right: GRID_SIZE - 2, bottom: GRID_SIZE - 2 },
       { top: 3, left: 3, right: GRID_SIZE - 4, bottom: GRID_SIZE - 4 },
       { top: 6, left: 6, right: GRID_SIZE - 7, bottom: GRID_SIZE - 7 },
       { top: 9, left: 3, right: GRID_SIZE - 4, bottom: 12 }
@@ -430,7 +481,8 @@ export default function CityStroller() {
         break
       case TileType.WALL:
         tileClass = 'bg-neutral-800 border border-neutral-900 shadow-inner'
-        tileContent = '🏠'
+        // falls spezielles Icon vorhanden, anzeigen
+        tileContent = specialIconsRef.current[`${x},${y}`] ?? '🏠'
         break
       case TileType.TREE:
         tileClass = 'bg-green-700 border border-green-800'
