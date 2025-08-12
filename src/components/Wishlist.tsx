@@ -83,7 +83,7 @@ export default function Wishlist() {
                 {item.item}
               </h3>
               {isReserved ? (
-                <div className="flex items-center gap-1 text-green-600">
+                <div className="flex items-center gap-1 text-violet-700">
                   <CheckCircle className="h-6 w-6" />
                   <span className="text-sm font-medium">Reserviert</span>
                 </div>
@@ -129,7 +129,7 @@ export default function Wishlist() {
                 </p>
               )}
               {isReserved && item.reserved_by && (
-                <p className="text-green-700 font-medium bg-green-50 px-3 py-2 rounded-lg inline-flex items-center gap-2">
+                <p className="text-violet-800 font-medium bg-violet-50 px-3 py-2 rounded-lg inline-flex items-center gap-2">
                   <span>🎉</span>
                   Reserviert von: {item.reserved_by}
                 </p>
@@ -171,6 +171,25 @@ export default function Wishlist() {
         </p>
       </div>
 
+      {/* Spiel-Teaser (oberhalb der Liste) */}
+      <div className="text-center mb-12">
+        <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <div className="text-4xl mb-4">🎮</div>
+            <h3 className="text-xl font-bold text-violet-800 mb-3">Lust auf eine kleine Pause?</h3>
+            <p className="text-violet-700 mb-6">
+              Spiele &quot;City Stroller&quot; - bringe den Kinderwagen sicher durch die Stadt! 🚗
+            </p>
+            <Link href="/game">
+              <Button className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-6 py-3">
+                <Gamepad2 className="h-5 w-5 mr-2" />
+                Spiel spielen
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Verfügbare Items */}
       <div className="mb-16">
         <CardHeader className="px-0 pb-6">
@@ -184,11 +203,11 @@ export default function Wishlist() {
         </CardHeader>
         
         {availableItems.length === 0 ? (
-          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+          <Card className="bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200">
             <CardContent className="p-12 text-center">
               <div className="text-6xl mb-4">🎉</div>
-              <h3 className="text-2xl font-bold text-green-700 mb-2">Alle Geschenke sind reserviert!</h3>
-              <p className="text-green-600 text-lg">Du bist der beste! Vielen Dank für deine Unterstützung! 💖</p>
+              <h3 className="text-2xl font-bold text-violet-700 mb-2">Alle Geschenke sind reserviert!</h3>
+              <p className="text-violet-600 text-lg">Du bist die Beste/der Beste! Vielen Dank für deine Unterstützung! 💖</p>
             </CardContent>
           </Card>
         ) : (
@@ -217,24 +236,6 @@ export default function Wishlist() {
         </div>
       )}
 
-      {/* Spiel-Button */}
-      <div className="text-center mt-16">
-        <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 max-w-md mx-auto">
-          <CardContent className="p-8 text-center">
-            <div className="text-4xl mb-4">🎮</div>
-            <h3 className="text-xl font-bold text-amber-800 mb-3">Lust auf eine kleine Pause?</h3>
-            <p className="text-amber-700 mb-6">
-              Spiele &quot;City Stroller&quot; - bringe den Kinderwagen sicher durch die Stadt! 🚗
-            </p>
-            <Link href="/game">
-              <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-6 py-3">
-                <Gamepad2 className="h-5 w-5 mr-2" />
-                Spiel spielen
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
 
       {selectedItem && (
         <ReserveDialog

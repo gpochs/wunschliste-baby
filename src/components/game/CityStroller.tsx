@@ -10,8 +10,7 @@ import {
   ChevronLeft, 
   ChevronRight,
   RotateCcw,
-  Settings,
-  X
+  Settings
 } from 'lucide-react'
 
 // Tile-Typen
@@ -51,7 +50,7 @@ export default function CityStroller() {
   const [gameStatus, setGameStatus] = useState<GameStatus>('playing')
   const [strollerPos, setStrollerPos] = useState<Position>(START_POSITION)
   const [cityMap, setCityMap] = useState<TileType[][]>([])
-  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  // Fahrzeuge im Ref für Performance
   const [trafficDensity, setTrafficDensity] = useState(100)
   const [reducedMotion, setReducedMotion] = useState(false)
   const [showOptions, setShowOptions] = useState(false)
@@ -74,26 +73,21 @@ export default function CityStroller() {
       map[i][GRID_SIZE - 1] = TileType.WALL
     }
 
-    // Hauptstraßen (H-Form)
+    // Straßennetz (Stadt-Gitter + Loops)
+    const horizontalRows = [3, 6, 9, 12, GRID_SIZE - 4]
+    const verticalCols = [3, 6, 9, 12, GRID_SIZE - 4]
     // Horizontale Straßen
-    for (let i = 2; i < GRID_SIZE - 2; i++) {
-      map[3][i] = TileType.ROAD
-      map[GRID_SIZE - 4][i] = TileType.ROAD
-    }
-    
+    horizontalRows.forEach((row) => {
+      for (let x = 2; x < GRID_SIZE - 2; x++) {
+        map[row][x] = TileType.ROAD
+      }
+    })
     // Vertikale Straßen
-    for (let i = 3; i < GRID_SIZE - 3; i++) {
-      map[i][3] = TileType.ROAD
-      map[i][GRID_SIZE - 4] = TileType.ROAD
-    }
-
-    // Zusätzliche Straßen-Loops
-    for (let i = 6; i < GRID_SIZE - 6; i++) {
-      map[6][i] = TileType.ROAD
-      map[GRID_SIZE - 7][i] = TileType.ROAD
-      map[i][6] = TileType.ROAD
-      map[i][GRID_SIZE - 7] = TileType.ROAD
-    }
+    verticalCols.forEach((col) => {
+      for (let y = 2; y < GRID_SIZE - 2; y++) {
+        map[y][col] = TileType.ROAD
+      }
+    })
 
     // Ziel (2x2)
     map[GOAL_POSITION.y][GOAL_POSITION.x] = TileType.GOAL
@@ -104,15 +98,17 @@ export default function CityStroller() {
     // Start-Position freigeben
     map[START_POSITION.y][START_POSITION.x] = TileType.EMPTY
 
-    // Landmarken hinzufügen
+    // Landmarken hinzufügen (Gebäude/Hochhäuser/Schule)
     const landmarks = [
-      { x: 5, y: 5, type: TileType.WALL }, // Haus
-      { x: 7, y: 7, type: TileType.WALL }, // Haus
-      { x: 12, y: 5, type: TileType.WALL }, // Haus
-      { x: 14, y: 7, type: TileType.WALL }, // Haus
-      { x: 8, y: 12, type: TileType.WALL }, // Krankenhaus
-      { x: 11, y: 12, type: TileType.WALL }, // Polizei
-      { x: 9, y: 10, type: TileType.WALL }, // Schule
+      { x: 5, y: 5, type: TileType.WALL },
+      { x: 7, y: 7, type: TileType.WALL },
+      { x: 12, y: 5, type: TileType.WALL },
+      { x: 14, y: 7, type: TileType.WALL },
+      { x: 8, y: 12, type: TileType.WALL },
+      { x: 11, y: 12, type: TileType.WALL },
+      { x: 9, y: 10, type: TileType.WALL },
+      { x: 4, y: 12, type: TileType.WALL },
+      { x: 15, y: 10, type: TileType.WALL }
     ]
 
     landmarks.forEach(landmark => {
@@ -134,12 +130,16 @@ export default function CityStroller() {
       }
     })
 
-    // Dekorationen (nicht blockierend)
+    // Dekorationen (Ampeln, Sehenswürdigkeiten – nicht blockierend)
     const decorPositions = [
-      { x: 8, y: 4 },
-      { x: 11, y: 4 },
-      { x: 8, y: 15 },
-      { x: 11, y: 15 }
+      { x: 3, y: 3 },
+      { x: 6, y: 6 },
+      { x: 9, y: 9 },
+      { x: 12, y: 12 },
+      { x: 3, y: GRID_SIZE - 4 },
+      { x: GRID_SIZE - 4, y: 3 },
+      { x: 9, y: 3 },
+      { x: 12, y: GRID_SIZE - 4 }
     ]
     
     decorPositions.forEach(pos => {
@@ -151,78 +151,61 @@ export default function CityStroller() {
     return map
   }, [])
 
-  // Fahrzeuge initialisieren
-  const initializeVehicles = useCallback(() => {
-    const density = trafficDensity / 100
-    const vehicleCounts = {
-      car: Math.floor(3 * density),
-      moto: Math.floor(2 * density),
-      scooter: Math.floor(2 * density),
-      bike: Math.floor(2 * density)
-    }
-
-    const newVehicles: Vehicle[] = []
-    const roadTiles: { x: number; y: number }[] = []
-
-    // Alle Straßen-Tiles sammeln
-    for (let y = 0; y < GRID_SIZE; y++) {
-      for (let x = 0; x < GRID_SIZE; x++) {
-        if (cityMap[y] && cityMap[y][x] === TileType.ROAD) {
-          roadTiles.push({ x, y })
-        }
+  // Rechteckige Loop-Pfade aus dem Straßennetz erzeugen
+  const buildLoopPaths = useCallback((): { x: number; y: number }[][] => {
+    const loops: { x: number; y: number }[][] = []
+    const rings = [
+      { top: 3, left: 3, right: GRID_SIZE - 4, bottom: GRID_SIZE - 4 },
+      { top: 6, left: 6, right: GRID_SIZE - 7, bottom: GRID_SIZE - 7 },
+      { top: 9, left: 3, right: GRID_SIZE - 4, bottom: 12 }
+    ]
+    for (const r of rings) {
+      const path: { x: number; y: number }[] = []
+      for (let x = r.left; x <= r.right; x++) path.push({ x, y: r.top })
+      for (let y = r.top + 1; y <= r.bottom; y++) path.push({ x: r.right, y })
+      for (let x = r.right - 1; x >= r.left; x--) path.push({ x, y: r.bottom })
+      for (let y = r.bottom - 1; y > r.top; y--) path.push({ x: r.left, y })
+      // Nur Pfade, die komplett auf ROAD liegen
+      if (path.every(p => cityMap[p.y]?.[p.x] === TileType.ROAD)) {
+        loops.push(path)
       }
     }
+    return loops
+  }, [cityMap])
 
-    // Fahrzeuge auf Straßen platzieren
-    Object.entries(vehicleCounts).forEach(([type, count]) => {
+  // Fahrzeuge initialisieren (fest definierte Anzahl, auf Loops)
+  const initializeVehicles = useCallback(() => {
+    const density = trafficDensity / 100
+    const counts = {
+      car: Math.max(0, Math.round(3 * density)),
+      moto: Math.max(0, Math.round(2 * density)),
+      scooter: Math.max(0, Math.round(2 * density)),
+      bike: Math.max(0, Math.round(2 * density))
+    }
+
+    const loopPaths = buildLoopPaths()
+    const allVehicles: Vehicle[] = []
+    const types: Vehicle['type'][] = ['car', 'moto', 'scooter', 'bike']
+
+    types.forEach((type) => {
+      const count = counts[type]
       for (let i = 0; i < count; i++) {
-        if (roadTiles.length > 0) {
-          const randomIndex = Math.floor(Math.random() * roadTiles.length)
-          const startPos = roadTiles.splice(randomIndex, 1)[0]
-          
-          // Einfachen Pfad generieren (horizontal oder vertikal)
-          const isHorizontal = Math.random() > 0.5
-          const path: { x: number; y: number }[] = []
-          
-          if (isHorizontal) {
-            // Horizontale Bewegung
-            for (let x = 0; x < GRID_SIZE; x++) {
-              if (cityMap[startPos.y] && cityMap[startPos.y][x] === TileType.ROAD) {
-                path.push({ x, y: startPos.y })
-              }
-            }
-          } else {
-            // Vertikale Bewegung
-            for (let y = 0; y < GRID_SIZE; y++) {
-              if (cityMap[y] && cityMap[y][startPos.x] === TileType.ROAD) {
-                path.push({ x: startPos.x, y })
-              }
-            }
-          }
-
-          if (path.length > 1) {
-            newVehicles.push({
-              type: type as Vehicle['type'],
-              speed: type === 'car' ? 4 : type === 'moto' ? 3 : 2,
-              path,
-              t: Math.random() * path.length, // Zufällige Startposition im Pfad
-              currentPathIndex: 0
-            })
-          }
+        const path = loopPaths[(i + Math.floor(Math.random() * loopPaths.length)) % Math.max(1, loopPaths.length)] || []
+        if (path.length > 0) {
+          const speed = type === 'car' ? 4 : type === 'moto' ? 3 : 2
+          allVehicles.push({ type, speed, path, t: Math.random() * path.length, currentPathIndex: 0 })
         }
       }
     })
 
-    setVehicles(newVehicles)
-    vehiclesRef.current = newVehicles
-  }, [cityMap, trafficDensity])
+    vehiclesRef.current = allVehicles
+  }, [buildLoopPaths, trafficDensity])
 
   // Spiel neu starten
   const restartGame = () => {
     setGameStatus('playing')
     setStrollerPos(START_POSITION)
     setCityMap(buildCityMap())
-    setVehicles([])
     vehiclesRef.current = []
     
     // Kurz warten, dann Fahrzeuge initialisieren
@@ -372,12 +355,12 @@ export default function CityStroller() {
     })
 
     let tileClass = ''
-    let tileContent = ''
+    let tileContent: React.ReactNode = ''
 
     switch (tileType) {
       case TileType.ROAD:
         tileClass = 'bg-neutral-300 border border-neutral-400'
-        tileContent = '🛣️'
+        tileContent = null
         break
       case TileType.WALL:
         tileClass = 'bg-neutral-800 border border-neutral-900 shadow-inner'
@@ -388,12 +371,12 @@ export default function CityStroller() {
         tileContent = '🌳'
         break
       case TileType.GOAL:
-        tileClass = 'bg-amber-400 border border-amber-500 shadow-lg'
-        tileContent = '🎯'
+        tileClass = 'bg-amber-300 border border-amber-500 shadow-lg'
+        tileContent = '🏠'
         break
       case TileType.DECOR:
         tileClass = 'bg-blue-200 border border-blue-300'
-        tileContent = '🏛️'
+        tileContent = '🚦'
         break
       default:
         tileClass = 'bg-neutral-100 border border-neutral-200'
@@ -410,12 +393,26 @@ export default function CityStroller() {
           width: tileSize,
           height: tileSize,
           minWidth: tileSize,
-          minHeight: tileSize
+          minHeight: tileSize,
+          backgroundImage: tileType === TileType.ROAD ? 'repeating-linear-gradient(90deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 6px, transparent 6px, transparent 12px)' : undefined,
+          backgroundSize: tileType === TileType.ROAD ? '100% 2px' : undefined,
+          backgroundPosition: tileType === TileType.ROAD ? 'center' : undefined,
+          backgroundRepeat: tileType === TileType.ROAD ? 'repeat-x' : undefined
         }}
         aria-label={`Tile bei Position ${x}, ${y}: ${tileType.toLowerCase()}`}
       >
         {isStrollerHere ? (
-          <div className="text-lg" aria-label="Kinderwagen">👶</div>
+          <svg
+            aria-label="Kinderwagen"
+            viewBox="0 0 24 24"
+            width={Math.round(tileSize * 0.8)}
+            height={Math.round(tileSize * 0.8)}
+          >
+            <circle cx="7" cy="19" r="2" fill="#1e3a8a" />
+            <circle cx="17" cy="19" r="2" fill="#1e3a8a" />
+            <rect x="6" y="11" width="10" height="4" rx="2" fill="#3b82f6" />
+            <path d="M6 11 Q10 3 18 8" fill="#60a5fa" />
+          </svg>
         ) : isVehicleHere ? (
           <div className="text-sm" aria-label="Fahrzeug">🚗</div>
         ) : (
@@ -453,12 +450,12 @@ export default function CityStroller() {
   const renderGameStatus = () => {
     if (gameStatus === 'win') {
       return (
-        <div className="absolute inset-0 bg-green-500/90 flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-violet-600/90 flex items-center justify-center z-10">
           <div className="text-center text-white">
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-3xl font-bold mb-4">Gewonnen!</h2>
             <p className="text-xl mb-6">Du hast den Kinderwagen sicher ans Ziel gebracht!</p>
-            <Button onClick={restartGame} size="lg" className="bg-white text-green-600 hover:bg-gray-100">
+            <Button onClick={restartGame} size="lg" className="bg-white text-violet-700 hover:bg-gray-100">
               <RotateCcw className="h-5 w-5 mr-2" />
               Nochmal spielen
             </Button>

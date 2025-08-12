@@ -135,7 +135,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 {item.item}
               </h3>
               {item.reserved ? (
-                <div className="flex items-center gap-1 text-green-600">
+                <div className="flex items-center gap-1 text-violet-700">
                   <CheckCircle className="h-6 w-6" />
                   <span className="text-sm font-medium">Reserviert</span>
                 </div>
@@ -181,7 +181,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 </p>
               )}
               {item.reserved && (
-                <p className="text-green-700 font-medium bg-green-50 px-3 py-2 rounded-lg inline-flex items-center gap-2">
+                <p className="text-violet-800 font-medium bg-violet-50 px-3 py-2 rounded-lg inline-flex items-center gap-2">
                   <span>🎉</span>
                   Geschenk ist reserviert
                 </p>
@@ -196,7 +196,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               size="sm"
               className={`${
                 item.reserved 
-                  ? 'text-green-600 border-2 border-green-600 hover:bg-green-50' 
+                  ? 'text-violet-700 border-2 border-violet-700 hover:bg-violet-50' 
                   : 'text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
               }`}
             >

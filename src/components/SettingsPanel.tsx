@@ -147,7 +147,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                   className={`h-14 text-lg border-2 transition-all duration-200 ${
                     settings.parent_email_1.trim() 
                       ? validateEmail(settings.parent_email_1)
-                        ? 'border-green-500 bg-green-50 focus:border-green-600 focus:ring-green-500'
+                        ? 'border-violet-500 bg-violet-50 focus:border-violet-600 focus:ring-violet-500'
                         : 'border-red-500 bg-red-50 focus:border-red-600 focus:ring-red-500'
                       : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500'
                   }`}
@@ -155,7 +155,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                 {settings.parent_email_1.trim() && (
                   <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                     {validateEmail(settings.parent_email_1) ? (
-                      <CheckCircle className="h-6 w-6 text-green-600" />
+                      <CheckCircle className="h-6 w-6 text-violet-700" />
                     ) : (
                       <AlertCircle className="h-6 w-6 text-red-600" />
                     )}
@@ -206,7 +206,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                   className={`h-14 text-lg border-2 transition-all duration-200 ${
                     settings.parent_email_2.trim() 
                       ? validateEmail(settings.parent_email_2)
-                        ? 'border-green-500 bg-green-50 focus:border-green-600 focus:ring-green-500'
+                        ? 'border-violet-500 bg-violet-50 focus:border-violet-600 focus:ring-violet-500'
                         : 'border-red-500 bg-red-50 focus:border-red-600 focus:ring-red-500'
                       : 'border-slate-300 focus:border-blue-500 focus:ring-blue-500'
                   }`}
@@ -214,7 +214,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                 {settings.parent_email_2.trim() && (
                   <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                     {validateEmail(settings.parent_email_2) ? (
-                      <CheckCircle className="h-6 w-6 text-green-600" />
+                      <CheckCircle className="h-6 w-6 text-violet-700" />
                     ) : (
                       <AlertCircle className="h-6 w-6 text-red-600" />
                     )}
