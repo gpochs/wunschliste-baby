@@ -168,8 +168,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error in reserve API:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler'
     return NextResponse.json(
-      { error: `Interner Server-Fehler: ${error.message}` },
+      { error: `Interner Server-Fehler: ${errorMessage}` },
       { status: 500 }
     )
   }
