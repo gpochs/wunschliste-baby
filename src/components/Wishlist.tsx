@@ -1,19 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { WishlistItem } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
-import { ExternalLink, Gift, Heart } from 'lucide-react'
 import ReserveDialog from './ReserveDialog'
-import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ExternalLink, Gift, CheckCircle } from 'lucide-react'
 
 export default function Wishlist() {
   const [items, setItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedItem, setSelectedItem] = useState<WishlistItem | null>(null)
-  const [showReserveDialog, setShowReserveDialog] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchItems()
@@ -26,126 +25,197 @@ export default function Wishlist() {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching items:', error)
+        return
+      }
+
       setItems(data || [])
     } catch (error) {
-      console.error('Error fetching items:', error)
-      toast.error('Fehler beim Laden der Wunschliste')
+      console.error('Error:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleReserve = (item: WishlistItem) => {
-    if (item.reserved) {
-      toast.info('Dieses Item ist bereits reserviert')
-      return
-    }
-    setSelectedItem(item)
-    setShowReserveDialog(true)
+  const handleReservationSuccess = () => {
+    fetchItems()
+    setDialogOpen(false)
   }
 
-  const handleReservationSuccess = () => {
-    setShowReserveDialog(false)
-    setSelectedItem(null)
-    fetchItems() // Refresh the list
-    toast.success('Item erfolgreich reserviert! Sie erhalten eine Bestätigung per E-Mail.')
+  const openReserveDialog = (item: WishlistItem) => {
+    setSelectedItem(item)
+    setDialogOpen(true)
   }
+
+  const availableItems = items.filter(item => !item.reserved)
+  const reservedItems = items.filter(item => item.reserved)
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[...Array(6)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-violet-500"></div>
+        <span className="ml-4 text-lg text-gray-600">Lade deine Wunschliste... ✨</span>
       </div>
     )
   }
 
-  if (items.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <Gift className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-600 mb-2">Noch keine Wünsche</h3>
-        <p className="text-gray-500">Die Wunschliste wird bald mit tollen Geschenken gefüllt!</p>
-      </div>
-    )
-  }
-
-  return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item) => (
-          <Card key={item.id} className={`transition-all hover:shadow-lg ${item.reserved ? 'opacity-75' : ''}`}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="text-lg">{item.item}</span>
-                {item.reserved && (
-                  <Heart className="h-5 w-5 text-red-500 fill-current" />
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {item.size && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Größe:</span> {item.size}
+  const renderItem = (item: WishlistItem, isReserved: boolean = false) => (
+    <Card key={item.id} className={`mb-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 ${
+      isReserved 
+        ? 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200' 
+        : 'bg-gradient-to-r from-blue-50 to-violet-50 border-blue-200'
+    }`}>
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <h3 className={`text-xl font-bold ${
+                isReserved ? 'text-gray-700' : 'text-violet-800'
+              }`}>
+                {item.item}
+              </h3>
+              {isReserved ? (
+                <div className="flex items-center gap-1 text-green-600">
+                  <CheckCircle className="h-6 w-6" />
+                  <span className="text-sm font-medium">Reserviert</span>
                 </div>
+              ) : (
+                <div className="flex items-center gap-1 text-blue-600">
+                  <Gift className="h-6 w-6" />
+                  <span className="text-sm font-medium">Verfügbar</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-2 text-sm text-gray-700">
+              {item.size && (
+                <p className="flex items-center gap-2">
+                  <span className="text-purple-600">📏</span>
+                  <span className="font-medium">Größe:</span> {item.size}
+                </p>
               )}
               {item.color && (
-                <div className="text-sm text-gray-600">
+                <p className="flex items-center gap-2">
+                  <span className="text-blue-600">🎨</span>
                   <span className="font-medium">Farbe:</span> {item.color}
-                </div>
+                </p>
+              )}
+              {item.website && (
+                <p className="flex items-center gap-2">
+                  <span className="text-violet-600">🔗</span>
+                  <span className="font-medium">Link:</span>{' '}
+                  <a 
+                    href={item.website} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline inline-flex items-center gap-1 font-medium"
+                  >
+                    Website öffnen <ExternalLink className="h-3 w-3" />
+                  </a>
+                </p>
               )}
               {item.notes && (
-                <div className="text-sm text-gray-600">
+                <p className="flex items-center gap-2">
+                  <span className="text-purple-600">💭</span>
                   <span className="font-medium">Notizen:</span> {item.notes}
-                </div>
+                </p>
               )}
-              
-              <div className="flex gap-2 pt-2">
-                {item.website && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(item.website, '_blank')}
-                    className="flex-1"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    Link
-                  </Button>
-                )}
-                
-                <Button
-                  onClick={() => handleReserve(item)}
-                  disabled={item.reserved}
-                  className={`flex-1 ${item.reserved ? 'bg-gray-300' : 'bg-pink-500 hover:bg-pink-600'}`}
-                >
-                  {item.reserved ? 'Reserviert' : 'Reservieren'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              {isReserved && item.reserved_by && (
+                <p className="text-green-700 font-medium bg-green-50 px-3 py-2 rounded-lg inline-flex items-center gap-2">
+                  <span>🎉</span>
+                  Reserviert von: {item.reserved_by}
+                </p>
+              )}
+            </div>
+          </div>
+          
+          {!isReserved && (
+            <Button
+              onClick={() => openReserveDialog(item)}
+              className={`ml-6 px-6 py-3 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 ${
+                'bg-gradient-to-r from-blue-500 to-violet-600 hover:from-blue-600 hover:to-violet-700'
+              }`}
+            >
+              <Gift className="h-5 w-5 mr-2" />
+              Reservieren
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+
+  return (
+    <div className="max-w-5xl mx-auto px-6 py-12 bg-gradient-to-br from-blue-50 via-violet-50 to-purple-50 min-h-screen">
+      <div className="text-center mb-12">
+        <div className="flex justify-center items-center gap-3 mb-4">
+          <span className="text-4xl">👶</span>
+          <span className="text-4xl">🍼</span>
+          <span className="text-4xl">🦄</span>
+          <span className="text-4xl">⭐</span>
+        </div>
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent mb-4">
+          Deine Baby-Wunschliste
+        </h1>
+        <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed">
+          Hallo du Liebe! 🥰 Wähle ein Geschenk aus und reserviere es mit deiner E-Mail-Adresse. 
+          Wir freuen uns riesig über deine Unterstützung! 💕
+        </p>
       </div>
 
-      {showReserveDialog && selectedItem && (
-        <ReserveDialog
-          item={selectedItem}
-          open={showReserveDialog}
-          onOpenChange={setShowReserveDialog}
-          onSuccess={handleReservationSuccess}
-        />
+      {/* Verfügbare Items */}
+      <div className="mb-16">
+        <CardHeader className="px-0 pb-6">
+          <CardTitle className="text-3xl font-bold text-blue-700 flex items-center justify-center gap-3">
+            <Gift className="h-8 w-8" />
+            <span>Verfügbare Geschenke</span>
+            <span className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-xl font-bold">
+              {availableItems.length}
+            </span>
+          </CardTitle>
+        </CardHeader>
+        
+        {availableItems.length === 0 ? (
+          <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+            <CardContent className="p-12 text-center">
+              <div className="text-6xl mb-4">🎉</div>
+              <h3 className="text-2xl font-bold text-green-700 mb-2">Alle Geschenke sind reserviert!</h3>
+              <p className="text-green-600 text-lg">Du bist der beste! Vielen Dank für deine Unterstützung! 💖</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-6">
+            {availableItems.map(item => renderItem(item, false))}
+          </div>
+        )}
+      </div>
+
+      {/* Reservierte Items */}
+      {reservedItems.length > 0 && (
+        <div>
+          <CardHeader className="px-0 pb-6">
+            <CardTitle className="text-3xl font-bold text-gray-600 flex items-center justify-center gap-3">
+              <CheckCircle className="h-8 w-8" />
+              <span>Bereits reserviert</span>
+              <span className="bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-xl font-bold">
+                {reservedItems.length}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          
+          <div className="space-y-6">
+            {reservedItems.map(item => renderItem(item, true))}
+          </div>
+        </div>
       )}
-    </>
+
+      <ReserveDialog
+        item={selectedItem!}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSuccess={handleReservationSuccess}
+      />
+    </div>
   )
 }

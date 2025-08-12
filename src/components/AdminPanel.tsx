@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { WishlistItem } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
-import { Plus, LogOut, Trash2, Edit, Heart } from 'lucide-react'
 import AddItemDialog from './AddItemDialog'
+import SettingsPanel from './SettingsPanel'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Edit, Trash2, ExternalLink, Gift, CheckCircle, Plus, LogOut, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface AdminPanelProps {
@@ -16,8 +17,9 @@ interface AdminPanelProps {
 export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const [items, setItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
     fetchItems()
@@ -34,7 +36,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
       setItems(data || [])
     } catch (error) {
       console.error('Error fetching items:', error)
-      toast.error('Fehler beim Laden der Items')
+      toast.error('Ups! Fehler beim Laden der Geschenke! 🥺')
     } finally {
       setLoading(false)
     }
@@ -44,24 +46,41 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     try {
       const { error } = await supabase
         .from('wishlist_items')
-        .insert([{
-          ...itemData,
-          reserved: false
-        }])
+        .insert([itemData])
 
       if (error) throw error
 
-      toast.success('Item erfolgreich hinzugefügt!')
-      setShowAddDialog(false)
+      toast.success('🎉 Yay! Das Geschenk wurde erfolgreich hinzugefügt! 💝')
+      setAddDialogOpen(false)
       fetchItems()
     } catch (error) {
       console.error('Error adding item:', error)
-      toast.error('Fehler beim Hinzufügen des Items')
+      toast.error('Ups! Fehler beim Hinzufügen des Geschenks! 🥺')
+    }
+  }
+
+  const handleEditItem = async (itemData: Omit<WishlistItem, 'id' | 'created_at' | 'updated_at' | 'reserved' | 'reserved_by' | 'reserved_at'>) => {
+    if (!editingItem) return
+
+    try {
+      const { error } = await supabase
+        .from('wishlist_items')
+        .update(itemData)
+        .eq('id', editingItem.id)
+
+      if (error) throw error
+
+      toast.success('✨ Perfekt! Das Geschenk wurde erfolgreich aktualisiert! 🎁')
+      setEditingItem(null)
+      fetchItems()
+    } catch (error) {
+      console.error('Error updating item:', error)
+      toast.error('Ups! Fehler beim Aktualisieren des Geschenks! 🥺')
     }
   }
 
   const handleDeleteItem = async (id: string) => {
-    if (!confirm('Möchten Sie dieses Item wirklich löschen?')) return
+    if (!confirm('Bist du sicher, dass du dieses Geschenk löschen möchtest? 🗑️')) return
 
     try {
       const { error } = await supabase
@@ -71,161 +90,243 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
 
       if (error) throw error
 
-      toast.success('Item erfolgreich gelöscht!')
+      toast.success('🗑️ Geschenk erfolgreich gelöscht! 👋')
       fetchItems()
     } catch (error) {
       console.error('Error deleting item:', error)
-      toast.error('Fehler beim Löschen des Items')
+      toast.error('Ups! Fehler beim Löschen des Geschenks! 🥺')
     }
   }
 
-  const handleToggleReserved = async (item: WishlistItem) => {
+  const toggleReserved = async (item: WishlistItem) => {
     try {
       const { error } = await supabase
         .from('wishlist_items')
         .update({
           reserved: !item.reserved,
-          reserved_by: !item.reserved ? 'Admin' : null,
-          reserved_at: !item.reserved ? new Date().toISOString() : null
+          reserved_by: !item.reserved ? null : item.reserved_by,
+          reserved_at: !item.reserved ? null : new Date().toISOString()
         })
         .eq('id', item.id)
 
       if (error) throw error
 
-      toast.success(`Item ${!item.reserved ? 'reserviert' : 'freigegeben'}!`)
+      toast.success(`🎯 Geschenk ${!item.reserved ? 'als reserviert markiert' : 'als verfügbar markiert'}! ✨`)
       fetchItems()
     } catch (error) {
-      console.error('Error updating item:', error)
-      toast.error('Fehler beim Aktualisieren des Items')
+      console.error('Error toggling reserved status:', error)
+      toast.error('Ups! Fehler beim Ändern des Status! 🥺')
     }
+  }
+
+  const renderItem = (item: WishlistItem) => (
+    <Card key={item.id} className={`mb-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 ${
+      item.reserved 
+        ? 'bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200' 
+        : 'bg-gradient-to-r from-blue-50 to-violet-50 border-2 border-blue-200'
+    }`}>
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-3">
+              <h3 className={`text-xl font-bold ${
+                item.reserved ? 'text-gray-700' : 'text-violet-800'
+              }`}>
+                {item.item}
+              </h3>
+              {item.reserved ? (
+                <div className="flex items-center gap-1 text-green-600">
+                  <CheckCircle className="h-6 w-6" />
+                  <span className="text-sm font-medium">Reserviert</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-blue-600">
+                  <Gift className="h-6 w-6" />
+                  <span className="text-sm font-medium">Verfügbar</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-2 text-sm text-gray-700">
+              {item.size && (
+                <p className="flex items-center gap-2">
+                  <span className="text-purple-600">📏</span>
+                  <span className="font-medium">Größe:</span> {item.size}
+                </p>
+              )}
+              {item.color && (
+                <p className="flex items-center gap-2">
+                  <span className="text-blue-600">🎨</span>
+                  <span className="font-medium">Farbe:</span> {item.color}
+                </p>
+              )}
+              {item.website && (
+                <p className="flex items-center gap-2">
+                  <span className="text-violet-600">🔗</span>
+                  <span className="font-medium">Website:</span>{' '}
+                  <a 
+                    href={item.website} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline inline-flex items-center gap-1 font-medium"
+                  >
+                    Link öffnen <ExternalLink className="h-3 w-3" />
+                  </a>
+                </p>
+              )}
+              {item.notes && (
+                <p className="flex items-center gap-2">
+                  <span className="text-purple-600">💭</span>
+                  <span className="font-medium">Notizen:</span> {item.notes}
+                </p>
+              )}
+              {item.reserved && item.reserved_by && (
+                <p className="text-green-700 font-medium bg-green-50 px-3 py-2 rounded-lg inline-flex items-center gap-2">
+                  <span>🎉</span>
+                  Reserviert von: {item.reserved_by}
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex gap-2 ml-4">
+            <Button
+              onClick={() => toggleReserved(item)}
+              variant="outline"
+              size="sm"
+              className={`${
+                item.reserved 
+                  ? 'text-green-600 border-2 border-green-600 hover:bg-green-50' 
+                  : 'text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              {item.reserved ? '🔄 Verfügbar machen' : '🎯 Als reserviert markieren'}
+            </Button>
+            
+            <Button
+              onClick={() => setEditingItem(item)}
+              variant="outline"
+              size="sm"
+              className="border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+            >
+              <Edit className="h-4 w-4 mr-1" />
+              Bearbeiten
+            </Button>
+            
+            <Button
+              onClick={() => handleDeleteItem(item.id)}
+              variant="outline"
+              size="sm"
+              className="border-2 border-red-600 text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Löschen
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+
+  if (showSettings) {
+    return <SettingsPanel onBack={() => setShowSettings(false)} />
   }
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
-        </div>
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-violet-500"></div>
+        <span className="ml-4 text-lg text-gray-600">Lade deine Geschenke... ✨</span>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="max-w-7xl mx-auto px-6 py-12 bg-gradient-to-br from-blue-50 via-violet-50 to-purple-50 min-h-screen">
+      <div className="flex justify-between items-center mb-12">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">👶 Admin-Bereich</h1>
-          <p className="text-gray-600">Verwalten Sie Ihre Baby-Wunschliste</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            🛠️ Dein Admin-Bereich
+          </h1>
+          <p className="text-lg text-gray-700">Verwalte deine Baby-Wunschliste mit Liebe! 💕</p>
         </div>
         <div className="flex gap-3">
           <Button
-            onClick={() => setShowAddDialog(true)}
-            className="bg-pink-500 hover:bg-pink-600"
+            onClick={() => setAddDialogOpen(true)}
+            className="bg-gradient-to-r from-blue-500 to-violet-600 hover:from-blue-600 hover:to-violet-700 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-6 py-3"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Item hinzufügen
+            <Plus className="h-5 w-5 mr-2" />
+            Neues Geschenk hinzufügen
           </Button>
-          <Button variant="outline" onClick={onLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
+          
+          <Button
+            onClick={() => setShowSettings(true)}
+            variant="outline"
+            className="border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 px-6 py-3"
+          >
+            <Settings className="h-5 w-5 mr-2" />
+            Einstellungen
+          </Button>
+          
+          <Button
+            onClick={onLogout}
+            variant="outline"
+            className="border-2 border-gray-400 text-gray-700 hover:bg-gray-50 hover:border-gray-500 px-6 py-3"
+          >
+            <LogOut className="h-5 w-5 mr-2" />
             Abmelden
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item) => (
-          <Card key={item.id} className={`${item.reserved ? 'opacity-75' : ''}`}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="text-lg">{item.item}</span>
-                {item.reserved && (
-                  <Heart className="h-5 w-5 text-red-500 fill-current" />
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {item.size && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Größe:</span> {item.size}
-                </div>
-              )}
-              {item.color && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Farbe:</span> {item.color}
-                </div>
-              )}
-              {item.website && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Website:</span> 
-                  <a href={item.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
-                    Link öffnen
-                  </a>
-                </div>
-              )}
-              {item.notes && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Notizen:</span> {item.notes}
-                </div>
-              )}
-              
-              <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleToggleReserved(item)}
-                  className="flex-1"
-                >
-                  {item.reserved ? 'Freigeben' : 'Reservieren'}
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditingItem(item)}
-                  className="flex-1"
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Bearbeiten
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDeleteItem(item.id)}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* Verfügbare Items */}
+        <div>
+          <CardHeader className="px-0 pb-6">
+            <CardTitle className="text-2xl font-bold text-blue-700 flex items-center justify-center gap-3">
+              <Gift className="h-7 w-7" />
+              <span>Verfügbare Geschenke</span>
+              <span className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-xl font-bold">
+                {items.filter(item => !item.reserved).length}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          
+          <div className="space-y-6">
+            {items.filter(item => !item.reserved).map(renderItem)}
+          </div>
+        </div>
+
+        {/* Reservierte Items */}
+        <div>
+          <CardHeader className="px-0 pb-6">
+            <CardTitle className="text-2xl font-bold text-gray-600 flex items-center justify-center gap-3">
+              <CheckCircle className="h-7 w-7" />
+              <span>Reservierte Geschenke</span>
+              <span className="bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-xl font-bold">
+                {items.filter(item => item.reserved).length}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          
+          <div className="space-y-6">
+            {items.filter(item => item.reserved).map(renderItem)}
+          </div>
+        </div>
       </div>
 
-      {items.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🎁</div>
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">Noch keine Items</h3>
-          <p className="text-gray-500">Fügen Sie Ihr erstes Item zur Wunschliste hinzu!</p>
-        </div>
-      )}
+      <AddItemDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        onAdd={handleAddItem}
+      />
 
-      {showAddDialog && (
-        <AddItemDialog
-          open={showAddDialog}
-          onOpenChange={setShowAddDialog}
-          onAdd={handleAddItem}
-        />
-      )}
-
-      {editingItem && (
-        <AddItemDialog
-          open={!!editingItem}
-          onOpenChange={() => setEditingItem(null)}
-          onAdd={handleAddItem}
-          editingItem={editingItem}
-        />
-      )}
+      <AddItemDialog
+        open={!!editingItem}
+        onOpenChange={(open) => !open && setEditingItem(null)}
+        onAdd={handleEditItem}
+        editingItem={editingItem}
+      />
     </div>
   )
 }
