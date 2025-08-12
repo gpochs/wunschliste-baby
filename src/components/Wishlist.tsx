@@ -41,6 +41,12 @@ export default function Wishlist() {
   const handleReservationSuccess = () => {
     fetchItems()
     setDialogOpen(false)
+    setSelectedItem(null)
+  }
+
+  const handleDialogClose = () => {
+    setDialogOpen(false)
+    setSelectedItem(null)
   }
 
   const openReserveDialog = (item: WishlistItem) => {
@@ -210,12 +216,14 @@ export default function Wishlist() {
         </div>
       )}
 
-      <ReserveDialog
-        item={selectedItem!}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSuccess={handleReservationSuccess}
-      />
+      {selectedItem && (
+        <ReserveDialog
+          item={selectedItem}
+          open={dialogOpen}
+          onOpenChange={handleDialogClose}
+          onSuccess={handleReservationSuccess}
+        />
+      )}
     </div>
   )
 }
