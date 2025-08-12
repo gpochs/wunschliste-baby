@@ -162,10 +162,10 @@ export default function Wishlist() {
           <span className="text-4xl">⭐</span>
         </div>
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent mb-4">
-          Deine Baby-Wunschliste
+          Unsere Baby-Wunschliste
         </h1>
         <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed">
-          Hallo du Liebe:r! 🥰 Wähle ein Geschenk aus und reserviere es mit deiner E-Mail-Adresse. 
+          Hallo du Liebe:r! 🥰 Wähle ein Item aus und reserviere es mit deiner E-Mail-Adresse. 
           Vielen Dank, dass du uns bei der Vorbereitung auf unser kleines Wunder unterstützen möchtest! 💕
         </p>
       </div>

@@ -49,7 +49,7 @@ export default function AddItemDialog({ open, onOpenChange, onAdd, editingItem }
     e.preventDefault()
     
     if (!formData.item.trim()) {
-      alert('Bitte geben Sie einen Item-Namen ein')
+      alert('Bitte gib einen Item-Namen ein')
       return
     }
 
@@ -86,7 +86,7 @@ export default function AddItemDialog({ open, onOpenChange, onAdd, editingItem }
             {editingItem ? 'Item bearbeiten' : 'Neues Item hinzufügen'}
           </DialogTitle>
           <DialogDescription>
-            {editingItem ? 'Bearbeiten Sie die Details des ausgewählten Items.' : 'Fügen Sie ein neues Item zur Wunschliste hinzu.'}
+            {editingItem ? 'Bearbeite die Details des ausgewählten Items.' : 'Füge ein neues Item zur Wunschliste hinzu.'}
           </DialogDescription>
         </DialogHeader>
         

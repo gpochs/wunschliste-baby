@@ -45,7 +45,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               🔐 Admin-Bereich
             </CardTitle>
             <p className="text-gray-600">
-              Bitte geben Sie das Passwort ein
+              Bitte gib das Passwort ein
             </p>
           </CardHeader>
           

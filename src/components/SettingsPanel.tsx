@@ -116,7 +116,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
             Benachrichtigungen konfigurieren
           </CardTitle>
           <p className="text-slate-200 mt-2">
-            Beide Partner erhalten E-Mails, wenn jemand ein Geschenk reserviert
+            Beide erhalten E-Mails, wenn jemand ein Geschenk reserviert
           </p>
         </CardHeader>
         
@@ -130,7 +130,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                 </div>
                 <div>
                   <Label className="text-lg font-bold text-slate-800">
-                    Partner 1 (Haupt-E-Mail) *
+                    Partner:in 1 (Haupt-E-Mail) *
                   </Label>
                   <p className="text-sm text-slate-600">
                     Diese E-Mail-Adresse ist erforderlich
@@ -189,7 +189,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                 </div>
                 <div>
                   <Label className="text-lg font-bold text-slate-800">
-                    Partner 2 (Optionale E-Mail)
+                    Partner:in 2 (Optionale E-Mail)
                   </Label>
                   <p className="text-sm text-slate-600">
                     Diese E-Mail-Adresse ist optional
@@ -241,8 +241,8 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                     Wie funktioniert das? 🤔
                   </h4>
                   <ul className="text-blue-700 text-sm space-y-1">
-                    <li>• Beide Partner erhalten E-Mails bei neuen Reservierungen</li>
-                    <li>• Partner 1 ist erforderlich, Partner 2 ist optional</li>
+                    <li>• Beide erhalten E-Mails bei neuen Reservierungen</li>
+                    <li>• Partner:in 1 ist erforderlich, Partner:in 2 ist optional</li>
                     <li>• E-Mails werden automatisch an alle konfigurierten Adressen gesendet</li>
                     <li>• Du kannst die Einstellungen jederzeit ändern</li>
                   </ul>

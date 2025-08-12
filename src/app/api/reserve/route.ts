@@ -99,23 +99,23 @@ export async function POST(request: NextRequest) {
         subject: `Bestätigung: ${item.item} reserviert`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #ec4899;">🎉 Vielen Dank für Ihre Reservierung!</h2>
+            <h2 style="color: #ec4899;">🎉 Vielen Dank für deine Reservierung!</h2>
             <p>Hallo!</p>
-            <p>Vielen Dank, dass Sie <strong>${item.item}</strong> aus unserer Baby-Wunschliste reserviert haben.</p>
+            <p>Vielen Dank, dass du <strong>${item.item}</strong> aus unserer Baby-Wunschliste reserviert hast.</p>
             
             <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin-top: 0;">Details Ihrer Reservierung:</h3>
+              <h3 style="margin-top: 0;">Details deiner Reservierung:</h3>
               <p><strong>Item:</strong> ${item.item}</p>
               ${item.size ? `<p><strong>Größe:</strong> ${item.size}</p>` : ''}
               ${item.color ? `<p><strong>Farbe:</strong> ${item.color}</p>` : ''}
               ${item.notes ? `<p><strong>Notizen:</strong> ${item.notes}</p>` : ''}
             </div>
             
-            <p>Wir werden Sie über den weiteren Ablauf informieren. Bei Fragen können Sie sich gerne an uns wenden.</p>
+            <p>Wir halten dich über den weiteren Ablauf auf dem Laufenden. Bei Fragen melde dich gern bei uns.</p>
             
-            <p>Vielen Dank für Ihre Unterstützung!<br>
+            <p>Vielen Dank für deine Unterstützung!<br>
             Herzliche Grüße<br>
-            Ihre Baby-Eltern</p>
+            Deine Baby-Eltern</p>
           </div>
         `
       })
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #ec4899;">🎁 Neue Geschenk-Reservierung!</h2>
               <p>Hallo!</p>
-              <p>Jemand hat ein Item aus Ihrer Baby-Wunschliste reserviert:</p>
+              <p>Jemand hat ein Item aus eurer Baby-Wunschliste reserviert:</p>
               
               <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin-top: 0;">Reserviertes Item:</h3>
