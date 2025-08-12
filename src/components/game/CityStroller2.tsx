@@ -25,7 +25,7 @@ enum TileType {
 interface GridPoint { x: number; y: number }
 
 interface Vehicle {
-  type: 'car' | 'moto' | 'scooter' | 'bike' | 'truck'
+  type: 'car' | 'moto' | 'scooter' | 'bike' | 'truck' | 'ambulance'
   speedTilesPerSecond: number
   path: GridPoint[]
   t: number
@@ -94,6 +94,7 @@ export default function CityStroller2() {
 
     // Dichte POI Blöcke (keine Randkacheln)
     const blocks: Array<{ x:number; y:number; w:number; h:number; icon:string }>= [
+      // Kern-POIs
       { x:5, y:4, w:2, h:2, icon:'🏫' }, // Schule
       { x:12, y:4, w:3, h:3, icon:'🏬' }, // Mall
       { x:10, y:12, w:3, h:2, icon:'🏥' }, // Spital
@@ -106,6 +107,18 @@ export default function CityStroller2() {
       { x:15, y:14, w:2, h:2, icon:'🏦' },
       { x:13, y:9, w:2, h:2, icon:'🏙️' },
       { x:5, y:8, w:2, h:2, icon:'🏘️' },
+      // Erweiterte Stadtvielfalt
+      { x:7, y:9, w:2, h:2, icon:'⛪' },
+      { x:9, y:7, w:2, h:2, icon:'🏗️' }, // Baustelle
+      { x:12, y:7, w:2, h:2, icon:'🏫' }, // zweite Schule
+      { x:14, y:10, w:2, h:2, icon:'🛍️' }, // Einkaufszeile
+      { x:9, y:11, w:2, h:2, icon:'🏥' }, // Klinik
+      { x:6, y:9, w:2, h:2, icon:'🏢' },
+      { x:4, y:12, w:2, h:2, icon:'🏣' }, // Postamt
+      { x:7, y:14, w:2, h:2, icon:'🏚️' }, // altes Haus
+      { x:12, y:13, w:2, h:2, icon:'🏫' },
+      { x:8, y:10, w:2, h:2, icon:'🏪' }, // Laden
+      { x:6, y:7, w:2, h:2, icon:'🧱' }, // Mauer/Block
     ]
     const poiMap: Record<string,string> = {}
     blocks.forEach(b=>{
@@ -124,9 +137,10 @@ export default function CityStroller2() {
 
     // Deko (Ampeln/Plaza… blockierend laut Vorgabe)
     const decorSpots: GridPoint[] = [
-      {x:6,y:6},{x:9,y:9},{x:12,y:12},{x:5,y:13},{x:14,y:5},{x:9,y:6},{x:12,y:9},{x:7,y:3}
+      {x:6,y:6},{x:9,y:9},{x:12,y:12},{x:5,y:13},{x:14,y:5},{x:9,y:6},{x:12,y:9},{x:7,y:3},
+      {x:3,y:8},{x:8,y:3},{x:10,y:8},{x:11,y:6},{x:13,y:11},{x:6,y:11},{x:4,y:9},{x:15,y:11}
     ]
-    const decorIcons = ['🚦','⛲','🅿️','☕','🍔','🚏','🎡','🚌']
+    const decorIcons = ['🚦','⛲','🅿️','☕','🍔','🚏','🎡','🚌','🚦','🌉','🚲','🏞️','🧋','🍟','🧁','🎠']
     const decorMap: Record<string,string> = {}
     decorSpots.forEach((p,i)=>{
       if (m[p.y][p.x]===TileType.EMPTY) {
@@ -135,6 +149,13 @@ export default function CityStroller2() {
       }
     })
     decorIconByKeyRef.current = decorMap
+
+    // Zusätzliche Hindernisse nahe am Rand (ohne die Perimeterstraße zu blockieren)
+    const edgeBand: GridPoint[] = [
+      {x:3,y:2},{x:16,y:3},{x:3,y:GRID_SIZE-3},{x:GRID_SIZE-3,y:16},
+      {x:5,y:2},{x:2,y:5},{x:GRID_SIZE-3,y:5},{x:5,y:GRID_SIZE-3}
+    ]
+    edgeBand.forEach(p=>{ if (m[p.y][p.x]===TileType.EMPTY) m[p.y][p.x]=TileType.DECOR })
 
     return m
   }, [])
@@ -171,11 +192,12 @@ export default function CityStroller2() {
       all.push({ type, speedTilesPerSecond: speed, path, t: Math.random()*path.length })
     }
     // Hohe Dichte
-    for(let i=0;i<12;i++) add('car', loops[(i)%loops.length]||perimeter, 4)
-    for(let i=0;i<8;i++) add('moto', loops[(i+2)%loops.length]||perimeter, 3)
-    for(let i=0;i<5;i++) add('scooter', loops[(i+1)%loops.length]||perimeter, 2)
-    for(let i=0;i<5;i++) add('bike', loops[(i+3)%loops.length]||perimeter, 2)
-    for(let i=0;i<3;i++) add('truck', perimeter, 2)
+    for(let i=0;i<16;i++) add('car', loops[(i)%loops.length]||perimeter, 4)
+    for(let i=0;i<10;i++) add('moto', loops[(i+2)%loops.length]||perimeter, 3)
+    for(let i=0;i<6;i++) add('scooter', loops[(i+1)%loops.length]||perimeter, 2)
+    for(let i=0;i<6;i++) add('bike', loops[(i+3)%loops.length]||perimeter, 2)
+    for(let i=0;i<4;i++) add('truck', perimeter, 2)
+    for(let i=0;i<4;i++) add('ambulance', loops[(i+4)%loops.length]||perimeter, 4)
     vehiclesRef.current = all
   },[buildLoops])
 
@@ -266,7 +288,7 @@ export default function CityStroller2() {
     let cls=''
     let content: React.ReactNode=null
     if (t===TileType.ROAD){
-      cls='bg-neutral-300 border border-neutral-400'
+      cls='bg-neutral-400 border border-neutral-500'
     } else if (t===TileType.WALL){
       cls='bg-neutral-800 border border-neutral-900 shadow-inner'
       content = poiIconByKeyRef.current[`${x},${y}`] ?? null
@@ -288,8 +310,8 @@ export default function CityStroller2() {
         className={`${cls} flex items-center justify-center text-xs ${isStroller?'ring-4 ring-blue-500 ring-opacity-75':''}`}
         style={{
           width: tileSize, height: tileSize, minWidth: tileSize, minHeight: tileSize,
-          backgroundImage: t===TileType.ROAD ? 'repeating-linear-gradient(90deg, rgba(255,255,255,0.15) 0, rgba(255,255,255,0.15) 6px, transparent 6px, transparent 12px)' : undefined,
-          backgroundSize: t===TileType.ROAD ? '100% 2px' : undefined,
+          backgroundImage: t===TileType.ROAD ? 'repeating-linear-gradient(0deg, rgba(255,255,255,0.12) 0, rgba(255,255,255,0.12) 2px, transparent 2px, transparent 8px)' : undefined,
+          backgroundSize: t===TileType.ROAD ? '2px 100%' : undefined,
           backgroundPosition: t===TileType.ROAD ? 'center' : undefined,
           backgroundRepeat: t===TileType.ROAD ? 'repeat-x' : undefined,
         }}
@@ -305,7 +327,7 @@ export default function CityStroller2() {
         ) : vHere ? (
           (()=>{
             const v = vehiclesRef.current.find(v=>{ const p=v.path[Math.floor(v.t)]; return p&&p.x===x&&p.y===y })
-            const icon = v?.type==='truck' ? '🚚' : v?.type==='moto' ? '🏍️' : v?.type==='scooter' ? '🛴' : v?.type==='bike' ? '🚲' : '🚗'
+            const icon = v?.type==='truck' ? '🚚' : v?.type==='ambulance' ? '🚑' : v?.type==='moto' ? '🏍️' : v?.type==='scooter' ? '🛴' : v?.type==='bike' ? '🚲' : '🚗'
             return <div className="text-sm" aria-label="Fahrzeug">{icon}</div>
           })()
         ) : content}
