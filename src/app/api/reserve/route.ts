@@ -111,8 +111,6 @@ export async function POST(request: NextRequest) {
               ${item.notes ? `<p><strong>Notizen:</strong> ${item.notes}</p>` : ''}
             </div>
             
-            <p>Wir halten dich über den weiteren Ablauf auf dem Laufenden. Bei Fragen melde dich gern bei uns.</p>
-            
             <p>Vielen Dank für deine Unterstützung!<br>
             Herzliche Grüße<br>
             Deine Baby-Eltern</p>
