@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, Save, CheckCircle, AlertCircle, User, Heart } from 'lucide-react'
+import { Mail, Save, CheckCircle, AlertCircle, User, Heart, ListRestart } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
@@ -25,9 +25,20 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
   })
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [leaderboardCount, setLeaderboardCount] = useState<number>(0)
 
   useEffect(() => {
     loadSettings()
+    // Rangliste laden (Client only)
+    try {
+      const raw = localStorage.getItem('cityStrollerLeaderboard')
+      if (raw) {
+        const parsed = JSON.parse(raw) as Array<unknown>
+        setLeaderboardCount(Array.isArray(parsed) ? parsed.length : 0)
+      }
+    } catch {
+      setLeaderboardCount(0)
+    }
   }, [])
 
   const loadSettings = async () => {
@@ -89,6 +100,19 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
     return settings.parent_email_1.trim() && 
            validateEmail(settings.parent_email_1) &&
            (!settings.parent_email_2.trim() || validateEmail(settings.parent_email_2))
+  }
+
+  const handleClearLeaderboard = () => {
+    const confirmed = confirm('Möchtest du die Spiel-Rangliste wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')
+    if (!confirmed) return
+    try {
+      localStorage.removeItem('cityStrollerLeaderboard')
+      setLeaderboardCount(0)
+      toast.success('🏁 Rangliste erfolgreich gelöscht!')
+    } catch (error) {
+      console.error('Error clearing leaderboard:', error)
+      toast.error('Ups! Rangliste konnte nicht gelöscht werden.')
+    }
   }
 
   return (
@@ -246,6 +270,26 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                     <li>• E-Mails werden automatisch an alle konfigurierten Adressen gesendet</li>
                     <li>• Du kannst die Einstellungen jederzeit ändern</li>
                   </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Spiel-Rangliste verwalten */}
+            <div className="bg-gradient-to-r from-violet-50 to-purple-50 border-2 border-violet-200 rounded-xl p-6">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-violet-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                  <ListRestart className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-violet-800 mb-1">Spiel-Rangliste</h4>
+                  <p className="text-violet-700 text-sm mb-4">Aktuelle Einträge: <span className="font-semibold">{leaderboardCount}</span></p>
+                  <Button
+                    onClick={handleClearLeaderboard}
+                    variant="outline"
+                    className="border-2 border-violet-700 text-violet-800 hover:bg-violet-100"
+                  >
+                    Rangliste löschen
+                  </Button>
                 </div>
               </div>
             </div>

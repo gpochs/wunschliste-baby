@@ -60,6 +60,7 @@ export default function CityStroller() {
   type LeaderboardEntry = { name: string; timeSeconds: number; dateIso: string }
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [playerName, setPlayerName] = useState('')
+  const canSave = playerName.trim().length > 0
   
   const vehiclesRef = useRef<Vehicle[]>([])
   const animationFrameRef = useRef<number>(0)
@@ -80,8 +81,8 @@ export default function CityStroller() {
     }
 
     // Straßennetz (Stadt-Gitter + Loops)
-    const horizontalRows = [3, 6, 9, 12, GRID_SIZE - 4]
-    const verticalCols = [3, 6, 9, 12, GRID_SIZE - 4]
+    const horizontalRows = [3, 6, 8, 9, 12, 13, GRID_SIZE - 4]
+    const verticalCols = [3, 5, 6, 9, 12, 14, GRID_SIZE - 4]
     // Horizontale Straßen
     horizontalRows.forEach((row) => {
       for (let x = 2; x < GRID_SIZE - 2; x++) {
@@ -103,6 +104,18 @@ export default function CityStroller() {
     for (let y = 1; y < GRID_SIZE - 1; y++) {
       map[y][1] = TileType.ROAD
       map[y][GRID_SIZE - 2] = TileType.ROAD
+    }
+
+    // Zusätzliche Querverbindungen, um Sackgassen und Engpässe zu erzeugen
+    for (let x = 4; x <= GRID_SIZE - 5; x++) {
+      if (x % 3 === 0) {
+        map[7][x] = TileType.ROAD
+      }
+    }
+    for (let y = 4; y <= GRID_SIZE - 5; y++) {
+      if (y % 4 === 0) {
+        map[y][10] = TileType.ROAD
+      }
     }
 
     // Ziel (2x2)
@@ -137,7 +150,9 @@ export default function CityStroller() {
     const forestClusters = [
       [ { x: 4, y: 8 }, { x: 5, y: 8 }, { x: 4, y: 9 } ],
       [ { x: 13, y: 6 }, { x: 14, y: 6 }, { x: 13, y: 7 } ],
-      [ { x: 7, y: 14 }, { x: 8, y: 14 }, { x: 7, y: 15 } ]
+      [ { x: 7, y: 14 }, { x: 8, y: 14 }, { x: 7, y: 15 } ],
+      [ { x: 16, y: 6 }, { x: 16, y: 7 }, { x: 15, y: 7 } ],
+      [ { x: 3, y: 15 }, { x: 4, y: 15 }, { x: 3, y: 16 } ]
     ]
     forestClusters.forEach(cluster => {
       cluster.forEach(pos => {
@@ -152,7 +167,8 @@ export default function CityStroller() {
       { x: 3, y: 3 }, { x: 6, y: 6 }, { x: 9, y: 9 }, { x: 12, y: 12 },
       { x: 3, y: GRID_SIZE - 4 }, { x: GRID_SIZE - 4, y: 3 },
       { x: 9, y: 3 }, { x: 12, y: GRID_SIZE - 4 },
-      { x: 6, y: 9 }, { x: 9, y: 6 }, { x: 12, y: 9 }, { x: 9, y: 12 }
+      { x: 6, y: 9 }, { x: 9, y: 6 }, { x: 12, y: 9 }, { x: 9, y: 12 },
+      { x: 5, y: 13 }, { x: 14, y: 5 }, { x: 16, y: 12 }, { x: 7, y: 3 }
     ]
     
     decorPositions.forEach(pos => {
@@ -174,7 +190,11 @@ export default function CityStroller() {
       // Stadium
       { x: 6, y: 12, w: 4, h: 3 },
       // Restaurant (kleiner Block)
-      { x: 8, y: 6, w: 2, h: 2 }
+      { x: 8, y: 6, w: 2, h: 2 },
+      // Weitere Häuserzeilen
+      { x: 3, y: 10, w: 2, h: 2 }, { x: 15, y: 6, w: 2, h: 2 },
+      { x: 9, y: 15, w: 2, h: 2 }, { x: 4, y: 14, w: 2, h: 2 },
+      { x: 11, y: 14, w: 3, h: 2 }, { x: 15, y: 14, w: 2, h: 2 }
     ]
     blockRects.forEach(r => {
       for (let yy = r.y; yy < r.y + r.h; yy++) {
@@ -198,7 +218,17 @@ export default function CityStroller() {
       { x: 6, y: 12, icon: '🏟️' }, // Stadium
       { x: 8, y: 6, icon: '🍽️' }, // Restaurant
       // ein paar Highlights
-      { x: 15, y: 10, icon: '⛪' }
+      { x: 15, y: 10, icon: '⛪' }, // Kirche
+      { x: 3, y: 10, icon: '🏠' }, { x: 15, y: 6, icon: '🏠' },
+      { x: 9, y: 15, icon: '🏠' }, { x: 4, y: 14, icon: '🏠' },
+      { x: 11, y: 14, icon: '🏨' }, // Hotel
+      { x: 15, y: 14, icon: '🏦' }, // Bank
+      { x: 5, y: 13, icon: '🚏' }, // Bushaltestelle (dekorativ)
+      { x: 14, y: 5, icon: '📮' }, // Post
+      { x: 16, y: 12, icon: '🚓' }, // Polizei
+      { x: 7, y: 3, icon: '🎭' }, // Theater
+      { x: 9, y: 6, icon: '🏛️' }, // Rathaus/Sehenswürdigkeit
+      { x: 12, y: 9, icon: '🧒' } // Kindergarten
     ]
     const iconMap: Record<string, string> = {}
     iconAt.forEach(p => { iconMap[`${p.x},${p.y}`] = p.icon })
@@ -253,8 +283,8 @@ export default function CityStroller() {
   const initializeVehicles = useCallback(() => {
     // Feste Anzahl entsprechend Spezifikation
     const counts = {
-      car: 3,
-      moto: 2,
+      car: 4,
+      moto: 3,
       scooter: 2,
       bike: 2
     }
@@ -445,7 +475,8 @@ export default function CityStroller() {
   }
 
   const handleSaveScore = () => {
-    const name = playerName.trim() || 'Gast'
+    const name = playerName.trim()
+    if (!name) return
     const entries = [...leaderboard, { name, timeSeconds: elapsedSeconds, dateIso: new Date().toISOString() }]
     entries.sort((a, b) => a.timeSeconds - b.timeSeconds)
     saveLeaderboard(entries.slice(0, 10))
@@ -591,10 +622,15 @@ export default function CityStroller() {
                 className="w-full rounded-md px-3 py-2 text-gray-900"
                 placeholder="z. B. Alex"
                 aria-label="Name für Rangliste"
+                required
+                aria-required="true"
               />
+              {!canSave && (
+                <p className="mt-2 text-xs text-white/80">Bitte gib deinen Namen ein, um in die Rangliste aufgenommen zu werden.</p>
+              )}
             </div>
             <div className="flex flex-wrap justify-center gap-3">
-              <Button onClick={handleSaveScore} size="lg" className="bg-white text-violet-700 hover:bg-gray-100">
+              <Button onClick={handleSaveScore} disabled={!canSave} size="lg" className="bg-white text-violet-700 hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed">
                 Zur Rangliste speichern
               </Button>
               <Button onClick={restartGame} size="lg" className="bg-white text-violet-700 hover:bg-gray-100">
