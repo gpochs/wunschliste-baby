@@ -6,7 +6,7 @@ import { ArrowLeft, Gamepad2 } from 'lucide-react'
 import Link from 'next/link'
 
 // Dynamischer Import der Game-Komponente (Client-seitig)
-const CityStroller = dynamic(() => import('./CityStroller'), {
+const CityStroller = dynamic(() => import('./CityStroller2'), {
   ssr: false,
   loading: () => (
     <div className="flex justify-center items-center py-24">

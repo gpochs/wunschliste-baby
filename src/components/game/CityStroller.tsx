@@ -25,7 +25,7 @@ enum TileType {
 
 // Fahrzeug-Typen
 interface Vehicle {
-  type: 'car' | 'moto' | 'scooter' | 'bike'
+  type: 'car' | 'moto' | 'scooter' | 'bike' | 'truck'
   speed: number
   path: { x: number; y: number }[]
   t: number
@@ -82,8 +82,9 @@ export default function CityStroller() {
     }
 
     // Straßennetz (Stadt-Gitter + Loops)
-    const horizontalRows = [2, 3, 5, 6, 8, 9, 11, 12, 13, 15, GRID_SIZE - 4]
-    const verticalCols = [2, 3, 5, 6, 8, 9, 11, 12, 14, 16, GRID_SIZE - 4]
+    // Neues engmaschiges Straßennetz (orthogonales Grid, city-like)
+    const horizontalRows = [2, 4, 6, 8, 10, 12, 14, GRID_SIZE - 4]
+    const verticalCols = [2, 4, 6, 8, 10, 12, 14, GRID_SIZE - 4]
     // Horizontale Straßen
     horizontalRows.forEach((row) => {
       for (let x = 2; x < GRID_SIZE - 2; x++) {
@@ -199,6 +200,7 @@ export default function CityStroller() {
     decorIconsRef.current = dIconMap
 
     // Zusätzliche Häuserblöcke (2x2 bzw. 3x2), sowie Schule/Spital/Mall/Stadion/Restaurant (als WALL-Cluster)
+    // Dichtere, aber randfreie Gebäudeblöcke (nicht direkt an der Perimeterstraße)
     const blockRects: Array<{ x: number; y: number; w: number; h: number }> = [
       { x: 5, y: 4, w: 2, h: 2 }, { x: 7, y: 10, w: 3, h: 2 },
       { x: 12, y: 8, w: 2, h: 2 }, { x: 14, y: 12, w: 3, h: 2 },
@@ -221,7 +223,10 @@ export default function CityStroller() {
       { x: 7, y: 4, w: 2, h: 2 }, { x: 10, y: 5, w: 2, h: 2 },
       { x: 16, y: 9, w: 2, h: 2 }, { x: 3, y: 6, w: 2, h: 2 }
     ]
-    blockRects.forEach(r => {
+    // Filtere Blöcke, die zu nah am Rand sind (keine Häuserrand-Optik)
+    const isNearPerimeter = (r: {x:number;y:number;w:number;h:number}) => r.x <= 2 || r.y <= 2 || (r.x + r.w) >= GRID_SIZE - 2 || (r.y + r.h) >= GRID_SIZE - 2
+    const filteredRects = blockRects.filter(r => !isNearPerimeter(r))
+    filteredRects.forEach(r => {
       for (let yy = r.y; yy < r.y + r.h; yy++) {
         for (let xx = r.x; xx < r.x + r.w; xx++) {
           if (map[yy] && map[yy][xx] === TileType.EMPTY) {
@@ -263,23 +268,7 @@ export default function CityStroller() {
     iconAt.forEach(p => { iconMap[`${p.x},${p.y}`] = p.icon })
     specialIconsRef.current = iconMap
 
-    // Zaun/Fence um das Zielgebiet, sodass der Perimeter allein nicht reicht
-    const fence = [
-      // oberhalb/unterhalb und seitlich um das Ziel, mit einer inneren Öffnung Richtung Mitte
-      ...Array.from({ length: 5 }, (_, i) => ({ x: GOAL_POSITION.x - 1 + i, y: GOAL_POSITION.y - 1 })),
-      ...Array.from({ length: 5 }, (_, i) => ({ x: GOAL_POSITION.x - 1 + i, y: GOAL_POSITION.y + 2 })),
-      { x: GOAL_POSITION.x - 1, y: GOAL_POSITION.y },
-      { x: GOAL_POSITION.x - 1, y: GOAL_POSITION.y + 1 },
-      { x: GOAL_POSITION.x + 3, y: GOAL_POSITION.y },
-      { x: GOAL_POSITION.x + 3, y: GOAL_POSITION.y + 1 },
-    ]
-    fence.forEach(({ x, y }) => {
-      if (map[y] && map[y][x] === TileType.EMPTY) {
-        map[y][x] = TileType.WALL
-      }
-    })
-    // Öffnung nach innen (Labyrinth-Zugang)
-    map[GOAL_POSITION.y - 1][GOAL_POSITION.x + 1] = TileType.EMPTY
+    // Kein Häuserrand/Zaun um das Ziel – Labyrinth entsteht durch Blockcluster und Straßenführung
 
     return map
   }, [])
@@ -288,11 +277,12 @@ export default function CityStroller() {
   const buildLoopPaths = useCallback((): { x: number; y: number }[][] => {
     const loops: { x: number; y: number }[][] = []
     const rings = [
-      // Perimeter-Loop (direkt innerhalb der Außenmauern)
       { top: 1, left: 1, right: GRID_SIZE - 2, bottom: GRID_SIZE - 2 },
+      { top: 2, left: 2, right: GRID_SIZE - 3, bottom: GRID_SIZE - 3 },
       { top: 3, left: 3, right: GRID_SIZE - 4, bottom: GRID_SIZE - 4 },
+      { top: 4, left: 4, right: GRID_SIZE - 5, bottom: GRID_SIZE - 5 },
       { top: 6, left: 6, right: GRID_SIZE - 7, bottom: GRID_SIZE - 7 },
-      { top: 9, left: 3, right: GRID_SIZE - 4, bottom: 12 }
+      { top: 8, left: 8, right: GRID_SIZE - 9, bottom: GRID_SIZE - 9 },
     ]
     for (const r of rings) {
       const path: { x: number; y: number }[] = []
@@ -300,7 +290,6 @@ export default function CityStroller() {
       for (let y = r.top + 1; y <= r.bottom; y++) path.push({ x: r.right, y })
       for (let x = r.right - 1; x >= r.left; x--) path.push({ x, y: r.bottom })
       for (let y = r.bottom - 1; y > r.top; y--) path.push({ x: r.left, y })
-      // Nur Pfade, die komplett auf ROAD liegen
       if (path.every(p => cityMap[p.y]?.[p.x] === TileType.ROAD)) {
         loops.push(path)
       }
@@ -312,10 +301,10 @@ export default function CityStroller() {
   const initializeVehicles = useCallback(() => {
     // Höhere Dichte: einige Fahrzeuge explizit auf dem Perimeter-Loop
     const counts = {
-      car: 6,
-      moto: 4,
-      scooter: 3,
-      bike: 3,
+      car: 10,
+      moto: 6,
+      scooter: 4,
+      bike: 4,
     }
 
     const loopPaths = buildLoopPaths()
@@ -345,6 +334,13 @@ export default function CityStroller() {
       } else {
         const p = loopPaths[(i + 2 + Math.floor(Math.random() * loopPaths.length)) % Math.max(1, loopPaths.length)] || []
         addVehicle('moto', p)
+      }
+    }
+
+    // Lastwagen: fahren ausschließlich auf dem äußeren Perimeter (langsam, aber präsent)
+    for (let i = 0; i < 3; i++) {
+      if (perimeter.length > 0) {
+        allVehicles.push({ type: 'truck', speed: 2, path: perimeter, t: Math.random() * perimeter.length, currentPathIndex: 0 })
       }
     }
 
@@ -386,9 +382,12 @@ export default function CityStroller() {
     // Grenzen prüfen
     if (newX < 0 || newX >= GRID_SIZE || newY < 0 || newY >= GRID_SIZE) return
 
-    // Kollision mit Wänden oder Bäumen prüfen
-    if (cityMap[newY] && cityMap[newY][newX] === TileType.WALL) return
-    if (cityMap[newY] && cityMap[newY][newX] === TileType.TREE) return
+    // Kollisionen mit Hindernissen führen zu Game Over
+    const nextTile = cityMap[newY]?.[newX]
+    if (nextTile === TileType.WALL || nextTile === TileType.TREE || nextTile === TileType.DECOR) {
+      setGameStatus('fail')
+      return
+    }
 
     // Neue Position setzen
     setStrollerPos({ x: newX, y: newY })
@@ -566,8 +565,8 @@ export default function CityStroller() {
         break
       case TileType.WALL:
         tileClass = 'bg-neutral-800 border border-neutral-900 shadow-inner'
-        // falls spezielles Icon vorhanden, anzeigen
-        tileContent = specialIconsRef.current[`${x},${y}`] ?? '🏠'
+        // Nur spezielle Blöcke mit Icon anzeigen; Standard-WALL ohne Icon (kein Häuserrand)
+        tileContent = specialIconsRef.current[`${x},${y}`] ?? null
         break
       case TileType.TREE:
         tileClass = 'bg-green-700 border border-green-800'
@@ -579,7 +578,7 @@ export default function CityStroller() {
         break
       case TileType.DECOR:
         tileClass = 'bg-blue-200 border border-blue-300'
-        tileContent = '🚦'
+        tileContent = decorIconsRef.current[`${x},${y}`] ?? '⛲'
         break
       default:
         tileClass = 'bg-neutral-100 border border-neutral-200'
@@ -624,7 +623,7 @@ export default function CityStroller() {
               const pos = vehicle.path[idx]
               return pos && pos.x === x && pos.y === y
             })
-            const icon = v?.type === 'moto' ? '🏍️' : v?.type === 'scooter' ? '🛴' : v?.type === 'bike' ? '🚲' : '🚗'
+            const icon = v?.type === 'truck' ? '🚚' : v?.type === 'moto' ? '🏍️' : v?.type === 'scooter' ? '🛴' : v?.type === 'bike' ? '🚲' : '🚗'
             return <div className="text-sm" aria-label="Fahrzeug">{icon}</div>
           })()
         ) : (
@@ -653,7 +652,7 @@ export default function CityStroller() {
         🎯 Ziel
       </Badge>
       <Badge variant="outline" className="bg-blue-100 text-blue-800">
-        🏛️ Sehenswürdigkeit
+        🏛️ Sehenswürdigkeit (blockiert)
       </Badge>
     </div>
   )
