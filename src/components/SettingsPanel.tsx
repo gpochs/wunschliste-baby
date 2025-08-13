@@ -43,14 +43,11 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
 
   const loadSettings = async () => {
     try {
-      // In einer echten App würden wir diese Einstellungen aus der Datenbank laden
-      // Für jetzt verwenden wir die Umgebungsvariablen als Fallback
-      const email1 = process.env.NEXT_PUBLIC_PARENT_EMAIL_1 || ''
-      const email2 = process.env.NEXT_PUBLIC_PARENT_EMAIL_2 || ''
-      
+      const { data, error } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle()
+      if (error) throw error
       setSettings({
-        parent_email_1: email1,
-        parent_email_2: email2
+        parent_email_1: data?.parent_email_1 || '',
+        parent_email_2: data?.parent_email_2 || ''
       })
     } catch (error) {
       console.error('Error loading settings:', error)
@@ -66,15 +63,14 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
     setSaving(true)
     
     try {
-      // Hier würden wir die Einstellungen in der Datenbank speichern
-      // Für jetzt zeigen wir nur eine Erfolgsmeldung
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      const { error } = await supabase.from('settings').upsert({
+        id: 1,
+        parent_email_1: settings.parent_email_1 || null,
+        parent_email_2: settings.parent_email_2 || null,
+        updated_at: new Date().toISOString()
+      })
+      if (error) throw error
       toast.success('🎉 E-Mail-Einstellungen erfolgreich gespeichert! 💕')
-      
-      // In einer echten App würden wir die Umgebungsvariablen aktualisieren
-      // oder die Einstellungen in der Datenbank speichern
-      
     } catch (error) {
       console.error('Error saving settings:', error)
       toast.error('Ups! Fehler beim Speichern der Einstellungen! 🥺')

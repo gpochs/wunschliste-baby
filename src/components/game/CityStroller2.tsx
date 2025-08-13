@@ -48,6 +48,7 @@ export default function CityStroller2() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [playerName, setPlayerName] = useState('')
   const [leaderboard, setLeaderboard] = useState<{ name: string; timeSeconds: number; dateIso: string }[]>([])
+  const [saveState, setSaveState] = useState<'idle'|'saving'|'done'|'error'>('idle')
 
   const vehiclesRef = useRef<Vehicle[]>([])
   const rafRef = useRef<number>(0)
@@ -295,6 +296,20 @@ export default function CityStroller2() {
     setLeaderboard(entries)
     try{ localStorage.setItem('cityStrollerLeaderboard', JSON.stringify(entries)) }catch{}
   }
+  const handleSaveScore = () => {
+    const name = playerName.trim()
+    if (!name) return
+    try {
+      setSaveState('saving')
+      const next=[...leaderboard,{name,timeSeconds:elapsedSeconds,dateIso:new Date().toISOString()}]
+        .sort((a,b)=>a.timeSeconds-b.timeSeconds)
+        .slice(0,10)
+      saveLeaderboard(next)
+      setSaveState('done')
+    } catch {
+      setSaveState('error')
+    }
+  }
 
   const move = useCallback((dx:number, dy:number)=>{
     if (gameStatus!=='playing') return
@@ -476,9 +491,12 @@ export default function CityStroller2() {
                 {!canSave && <p className="mt-2 text-sm text-white font-medium">Bitte Namen eingeben.</p>}
               </div>
               <div className="flex flex-wrap justify-center gap-3">
-                <Button disabled={!canSave} onClick={()=>{ const name=playerName.trim(); if(!name) return; const next=[...leaderboard,{name,timeSeconds:elapsedSeconds,dateIso:new Date().toISOString()}].sort((a,b)=>a.timeSeconds-b.timeSeconds).slice(0,10); saveLeaderboard(next)}} className="bg-white text-violet-700 hover:bg-gray-100">Zur Rangliste speichern</Button>
+                <Button disabled={!canSave || saveState==='saving' || saveState==='done'} onClick={handleSaveScore} className="bg-white text-violet-700 hover:bg-gray-100 disabled:opacity-60 disabled:cursor-not-allowed">{saveState==='done' ? 'Gespeichert ✓' : 'Zur Rangliste speichern'}</Button>
                 <Button onClick={restart} className="bg-white text-violet-700 hover:bg-gray-100"><RotateCcw className="h-5 w-5 mr-2"/>Nochmal spielen</Button>
               </div>
+              {saveState==='error' && (
+                <p className="mt-2 text-sm text-red-100">Konnte nicht speichern. Bitte erneut versuchen.</p>
+              )}
             </div>
           </div>
         )}
@@ -492,6 +510,26 @@ export default function CityStroller2() {
               <Button onClick={restart} className="bg-white text-red-700 hover:bg-gray-100"><RotateCcw className="h-5 w-5 mr-2"/>Nochmal versuchen</Button>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Rangliste */}
+      <div className="bg-white border border-gray-200 rounded-lg mt-4 p-4">
+        <h4 className="text-base font-semibold text-indigo-800 mb-2">Rangliste – Bestzeiten</h4>
+        {leaderboard.length === 0 ? (
+          <p className="text-sm text-gray-600">Noch keine Einträge. Spiele und sichere dir den ersten Platz! 🏆</p>
+        ) : (
+          <ol className="space-y-1">
+            {leaderboard.map((entry, idx) => (
+              <li key={`${entry.name}-${entry.dateIso}-${idx}`} className="flex items-center justify-between text-sm">
+                <span className="text-gray-700">
+                  <span className="inline-block w-6 text-right mr-2">{idx + 1}.</span>
+                  <span className="font-medium">{entry.name}</span>
+                </span>
+                <span className="font-mono text-indigo-700">{formatTime(entry.timeSeconds)}</span>
+              </li>
+            ))}
+          </ol>
         )}
       </div>
 

@@ -123,14 +123,25 @@ export async function POST(request: NextRequest) {
       // Don't fail the reservation if email fails
     }
 
-    // Send notification email to parent (using PARENT_EMAIL_1)
-    const parentEmail = process.env.PARENT_EMAIL_1
-    if (parentEmail) {
+    // Send notification email(s) to parents from settings table (fallback to env)
+    let parentEmails: string[] = []
+    try {
+      const { data, error } = await supabase.from('settings').select('parent_email_1,parent_email_2').eq('id',1).maybeSingle()
+      if (error) throw error
+      if (data?.parent_email_1) parentEmails.push(data.parent_email_1)
+      if (data?.parent_email_2) parentEmails.push(data.parent_email_2)
+    } catch (e) {
+      // fallback
+      if (process.env.PARENT_EMAIL_1) parentEmails.push(process.env.PARENT_EMAIL_1)
+      if (process.env.PARENT_EMAIL_2) parentEmails.push(process.env.PARENT_EMAIL_2 as string)
+    }
+    const uniqueParentEmails = Array.from(new Set(parentEmails.filter(Boolean)))
+    if (uniqueParentEmails.length > 0) {
       try {
-        console.log('Sending notification email to parent:', parentEmail)
+        console.log('Sending notification email to parents:', uniqueParentEmails)
         await resend.emails.send({
           from: `Baby-Wunschliste <${fromEmail}>`,
-          to: [parentEmail],
+          to: uniqueParentEmails,
           subject: `Neue Reservierung: ${item.item}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

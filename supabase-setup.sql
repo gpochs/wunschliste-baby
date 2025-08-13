@@ -60,6 +60,35 @@ CREATE TRIGGER update_wishlist_items_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+-- App settings (stores notification emails)
+CREATE TABLE IF NOT EXISTS settings (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  parent_email_1 TEXT,
+  parent_email_2 TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Simple RLS for demo: allow read/write (adjust for production)
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'public can read settings'
+  ) THEN
+    CREATE POLICY "public can read settings" ON settings FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies WHERE policyname = 'public can upsert settings'
+  ) THEN
+    CREATE POLICY "public can upsert settings" ON settings FOR INSERT WITH CHECK (true);
+    CREATE POLICY "public can update settings" ON settings FOR UPDATE USING (true);
+  END IF;
+END $$;
+
+-- Ensure one row exists
+INSERT INTO settings (id, parent_email_1, parent_email_2)
+VALUES (1, NULL, NULL)
+ON CONFLICT (id) DO NOTHING;
+
 -- Insert some sample data (optional)
 INSERT INTO wishlist_items (item, size, color, notes) VALUES
   ('Strampler', '56', 'Blau', 'Für den Sommer geeignet'),
