@@ -23,7 +23,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
     parent_email_1: '',
     parent_email_2: ''
   })
-  const [loading] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [leaderboardCount, setLeaderboardCount] = useState<number>(0)
 
@@ -42,8 +42,13 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
   }, [])
 
   const loadSettings = async () => {
+    setLoading(true)
     try {
-      const { data, error } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle()
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('id', 1)
+        .maybeSingle()
       if (error) throw error
       setSettings({
         parent_email_1: data?.parent_email_1 || '',
@@ -51,6 +56,8 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
       })
     } catch (error) {
       console.error('Error loading settings:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -63,14 +70,18 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
     setSaving(true)
     
     try {
-      const { error } = await supabase.from('settings').upsert({
+      const payload = [{
         id: 1,
         parent_email_1: settings.parent_email_1 || null,
         parent_email_2: settings.parent_email_2 || null,
         updated_at: new Date().toISOString()
-      })
+      }]
+      const { error } = await supabase
+        .from('settings')
+        .upsert(payload, { onConflict: 'id' })
       if (error) throw error
       toast.success('🎉 E-Mail-Einstellungen erfolgreich gespeichert! 💕')
+      await loadSettings()
     } catch (error) {
       console.error('Error saving settings:', error)
       toast.error('Ups! Fehler beim Speichern der Einstellungen! 🥺')
