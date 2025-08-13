@@ -273,6 +273,7 @@ export default function CityStroller2() {
     setGameStatus('playing')
     setStroller(START)
     setElapsedSeconds(0)
+    setSaveState('idle')
     const m = buildCity()
     setCity(m)
     initializeVehicles(m)
