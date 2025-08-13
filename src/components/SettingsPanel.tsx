@@ -175,6 +175,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                   value={settings.parent_email_1}
                   onChange={(e) => handleInputChange('parent_email_1', e.target.value)}
                   placeholder="deine.email@beispiel.de"
+                  disabled={loading || saving}
                   className={`h-14 text-lg border-2 transition-all duration-200 ${
                     settings.parent_email_1.trim() 
                       ? validateEmail(settings.parent_email_1)
@@ -234,6 +235,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                   value={settings.parent_email_2}
                   onChange={(e) => handleInputChange('parent_email_2', e.target.value)}
                   placeholder="partner.email@beispiel.de (optional)"
+                  disabled={loading || saving}
                   className={`h-14 text-lg border-2 transition-all duration-200 ${
                     settings.parent_email_2.trim() 
                       ? validateEmail(settings.parent_email_2)
@@ -314,7 +316,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
             
             <Button
               onClick={handleSave}
-              disabled={!isFormValid() || saving}
+              disabled={!isFormValid() || saving || loading}
               className="flex-1 h-14 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
               {saving ? (
