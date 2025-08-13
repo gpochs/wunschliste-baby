@@ -36,8 +36,8 @@ type GameStatus = 'playing' | 'win' | 'fail'
 const GRID_SIZE = 20
 // Start unten links (innen) auf der Perimeterstraße
 const START: GridPoint = { x: 2, y: GRID_SIZE - 2 }
-// Ziel oben rechts (innen), ca. 5 Kästchen vom Rand entfernt
-const GOAL: GridPoint = { x: GRID_SIZE - 5, y: 5 }
+// Ziel weiter nach links verschoben (4 Felder): oben rechts-nah, ~9 vom linken Rand
+const GOAL: GridPoint = { x: GRID_SIZE - 9, y: 5 }
 
 export default function CityStroller2() {
   const tileSize = useTileSize()
@@ -266,12 +266,12 @@ export default function CityStroller2() {
     for (let k=0; k<L && carsToPlace>0; k++) { add('car', loops[k]||perimeter, 4); carsToPlace-- }
     for (let i=0; i<carsToPlace; i++) add('car', loops[(i)%L]||perimeter, 4)
     for(let i=0;i<12;i++) add('moto', loops[(i+20)%L]||perimeter, 3)
-    for(let i=0;i<8;i++) add('scooter', loops[(i+7)%L]||perimeter, 2)
+    for(let i=0;i<8;i++) add('scooter', loops[(i+18)%L]||perimeter, 2)
     for(let i=0;i<8;i++) add('bike', loops[(i+14)%L]||perimeter, 2)
     for(let i=0;i<5;i++) add('truck', loops[(i+14)%L]||perimeter, 4)
-    for(let i=0;i<4;i++) add('ambulance', loops[(i+4)%L]||perimeter, 4)
-    for(let i=0;i<6;i++) add('bus', loops[(i+12)%L]||perimeter, 2)
-    for(let i=0;i<8;i++) add('taxi', loops[(i+9)%L]||perimeter, 4)
+    for(let i=0;i<4;i++) add('ambulance', loops[(i+13)%L]||perimeter, 4)
+    for(let i=0;i<14;i++) add('bus', loops[(i+12)%L]||perimeter, 2)
+    for(let i=0;i<12;i++) add('taxi', loops[(i+9)%L]||perimeter, 4)
     for(let i=0;i<5;i++) add('police', loops[(i+8)%L]||perimeter, 5)
     vehiclesRef.current = all
   },[buildLoops])
