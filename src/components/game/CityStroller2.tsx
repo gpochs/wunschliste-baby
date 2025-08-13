@@ -131,6 +131,19 @@ export default function CityStroller2() {
     })
     poiIconByKeyRef.current = poiMap
 
+    // POIs direkt am inneren Spielrand (an die Perimeterstraße angrenzend)
+    const edgePois: Array<{x:number;y:number;icon:string}> = [
+      {x:2,y:4,icon:'🏥'},{x:GRID_SIZE-3,y:5,icon:'🏫'},
+      {x:4,y:2,icon:'🏛️'},{x:5,y:GRID_SIZE-3,icon:'🏪'},
+      {x:GRID_SIZE-3,y:GRID_SIZE-5,icon:'🏬'},{x:GRID_SIZE-5,y:2,icon:'⛪'}
+    ]
+    edgePois.forEach(p=>{
+      if (m[p.y][p.x]===TileType.EMPTY){
+        m[p.y][p.x]=TileType.WALL
+        poiMap[`${p.x},${p.y}`]=p.icon
+      }
+    })
+
     // Wälder (Cluster)
     const forests = [ [ {x:16,y:6},{x:16,y:7},{x:15,y:7} ], [ {x:7,y:15},{x:8,y:15},{x:7,y:14} ] ]
     forests.flat().forEach(p=>{ if (m[p.y][p.x]===TileType.EMPTY) m[p.y][p.x]=TileType.TREE })
@@ -194,6 +207,14 @@ export default function CityStroller2() {
         if (bottom-top>=2 && right-left>=2) pushRect(top,left,right,bottom)
       }
     }
+
+    // Lange Band-Loops: untere Stadthälfte (erzwingt Verkehr unten)
+    pushRect(12, 2, GRID_SIZE-3, 16)
+    pushRect(14, 2, GRID_SIZE-3, 16)
+
+    // Vertikale Band-Loops für rechten/linken Sektor
+    pushRect(2, 12, 14, GRID_SIZE-3)
+    pushRect(2, GRID_SIZE-5, GRID_SIZE-3, GRID_SIZE-3)
     return loops
   },[])
 
@@ -379,7 +400,7 @@ export default function CityStroller2() {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-indigo-800">City Stroller</h3>
           <Button variant="outline" size="sm" onClick={()=>setShowOptions(s=>!s)} className="border-violet-300 text-violet-700 hover:bg-violet-100">
-            <Settings className="h-4 w-4 mr-2" /> Optionen
+            <Settings className="h-4 w-4 mr-2" /> Anleitung
           </Button>
         </div>
         <div className="flex items-center justify-center mb-2">
