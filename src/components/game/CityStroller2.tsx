@@ -36,8 +36,8 @@ type GameStatus = 'playing' | 'win' | 'fail'
 const GRID_SIZE = 20
 // Start unten (links innen), nahe Perimeterstraße
 const START: GridPoint = { x: 2, y: GRID_SIZE - 2 }
-// Ziel oben rechts-nah, aber nicht ganz am Rand; etwas oberhalb der Mitte
-const GOAL: GridPoint = { x: GRID_SIZE - 5, y: 6 }
+// Ziel weiter in die Mitte verlegt (oben-rechts-nah, aber zentraler)
+const GOAL: GridPoint = { x: Math.floor(GRID_SIZE * 0.6), y: Math.floor(GRID_SIZE * 0.45) }
 
 export default function CityStroller2() {
   const tileSize = useTileSize()
@@ -147,6 +147,35 @@ export default function CityStroller2() {
         poiMap[`${p.x},${p.y}`]=p.icon
       }
     })
+
+    // Gleichmäßig verteilte Rand-POIs: direkt an die Perimeterstraße angrenzend (eine Kachel entfernt): x=3 / x=GRID_SIZE-4, y=3 / y=GRID_SIZE-4
+    const beltIcons = ['🏥','🏫','🏛️','🏦','🏪','🏬','⛪','🏨']
+    let bi = 0
+    // senkrechte Bänder links/rechts
+    for (let y = 3; y <= GRID_SIZE - 4; y += 2) {
+      for (const x of [3, GRID_SIZE - 4]) {
+        // nicht Start-/Ziel-Kacheln überschreiben
+        const inGoal = (x === GOAL.x || x === GOAL.x + 1) && (y === GOAL.y || y === GOAL.y + 1)
+        const isStart = x === START.x && y === START.y
+        if (!inGoal && !isStart && m[y][x] === TileType.EMPTY) {
+          m[y][x] = TileType.WALL
+          poiMap[`${x},${y}`] = beltIcons[bi % beltIcons.length]
+          bi++
+        }
+      }
+    }
+    // waagerechte Bänder oben/unten
+    for (let x = 3; x <= GRID_SIZE - 4; x += 2) {
+      for (const y of [3, GRID_SIZE - 4]) {
+        const inGoal = (x === GOAL.x || x === GOAL.x + 1) && (y === GOAL.y || y === GOAL.y + 1)
+        const isStart = x === START.x && y === START.y
+        if (!inGoal && !isStart && m[y][x] === TileType.EMPTY) {
+          m[y][x] = TileType.WALL
+          poiMap[`${x},${y}`] = beltIcons[bi % beltIcons.length]
+          bi++
+        }
+      }
+    }
 
     // Wälder (Cluster)
     const forests = [ [ {x:16,y:6},{x:16,y:7},{x:15,y:7} ], [ {x:7,y:15},{x:8,y:15},{x:7,y:14} ] ]
