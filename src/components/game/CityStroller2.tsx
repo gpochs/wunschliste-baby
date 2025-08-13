@@ -36,8 +36,8 @@ type GameStatus = 'playing' | 'win' | 'fail'
 const GRID_SIZE = 20
 // Start unten links (innen) auf der Perimeterstraße
 const START: GridPoint = { x: 2, y: GRID_SIZE - 2 }
-// Ziel weiter nach links verschoben (4 Felder): oben rechts-nah, ~9 vom linken Rand
-const GOAL: GridPoint = { x: GRID_SIZE - 9, y: 5 }
+// Ziel: oben rechts-nah, 5 Felder vom oberen Rand, 5 Felder vom rechten Rand (2x2 Zielblock)
+const GOAL: GridPoint = { x: GRID_SIZE - 7, y: 5 }
 
 export default function CityStroller2() {
   const tileSize = useTileSize()
@@ -260,31 +260,23 @@ export default function CityStroller2() {
       if (path.length===0) return
       all.push({ type, speedTilesPerSecond: speed, path, t: Math.random()*path.length })
     }
-    // Hohe Dichte und Vielfalt – gleichmäßiger verteilt über Loops
-    const L = Math.max(loops.length, 1)
-    // zunächst eine Runde: pro Loop 1 Auto (bis zu gewünschter Anzahl)
-    let carsToPlace = 20
-		for (let k=0; k<L && carsToPlace>0; k++) { add('car', loops[k]||perimeter, 1.0); carsToPlace-- }
-		for (let i=0; i<carsToPlace; i++) add('car', loops[(i)%L]||perimeter, 1.0)
-		for(let i=0;i<12;i++) add('moto', loops[(i+20)%L]||perimeter, 0.9)
-		for(let i=0;i<8;i++) add('scooter', loops[(i+18)%L]||perimeter, 0.6)
-		for(let i=0;i<8;i++) add('bike', loops[(i+14)%L]||perimeter, 0.6)
-		for(let i=0;i<5;i++) add('truck', loops[(i+14)%L]||perimeter, 0.8)
-		for(let i=0;i<4;i++) add('ambulance', loops[(i+13)%L]||perimeter, 1.1)
-		for(let i=0;i<14;i++) add('bus', loops[(i+12)%L]||perimeter, 0.7)
-		for(let i=0;i<12;i++) add('taxi', loops[(i+9)%L]||perimeter, 1.0)
-		for(let i=0;i<5;i++) add('police', loops[(i+8)%L]||perimeter, 1.3)
+    // Exakte Vorgaben: 3 Autos (4 Felder/s), 2 Motorräder (3 Felder/s), 2 Scooter (2 Felder/s), 2 Velos (2 Felder/s)
+    const pick = (i: number) => loops[i % Math.max(1, loops.length)] || perimeter
+    for (let i = 0; i < 3; i++) add('car', pick(i), 4)
+    for (let i = 0; i < 2; i++) add('moto', pick(i + 3), 3)
+    for (let i = 0; i < 2; i++) add('scooter', pick(i + 5), 2)
+    for (let i = 0; i < 2; i++) add('bike', pick(i + 7), 2)
     vehiclesRef.current = all
   },[buildLoops])
 
-  const restart = () => {
+  const restart = useCallback(() => {
     setGameStatus('playing')
     setStroller(START)
     setElapsedSeconds(0)
     const m = buildCity()
     setCity(m)
     initializeVehicles(m)
-  }
+  },[buildCity, initializeVehicles])
 
   useEffect(()=>{ restart() },[restart])
 
