@@ -34,10 +34,10 @@ interface Vehicle {
 type GameStatus = 'playing' | 'win' | 'fail'
 
 const GRID_SIZE = 20
-// Start unten (links innen), nahe Perimeterstraße
-const START: GridPoint = { x: 2, y: GRID_SIZE - 2 }
-// Ziel weiter in die Mitte verlegt (oben-rechts-nah, aber zentraler)
-const GOAL: GridPoint = { x: Math.floor(GRID_SIZE * 0.6), y: Math.floor(GRID_SIZE * 0.45) }
+// Start unten rechts (innen) auf der Perimeterstraße
+const START: GridPoint = { x: GRID_SIZE - 2, y: GRID_SIZE - 2 }
+// Ziel oben rechts (innen), auf Straßenkacheln (y=2 ist Straße, x=GRID_SIZE-4 ist innere Spalte)
+const GOAL: GridPoint = { x: GRID_SIZE - 4, y: 2 }
 
 export default function CityStroller2() {
   const tileSize = useTileSize()
