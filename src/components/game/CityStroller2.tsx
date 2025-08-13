@@ -286,7 +286,7 @@ export default function CityStroller2() {
     initializeVehicles(m)
   }
 
-  useEffect(()=>{ restart() },[])
+  useEffect(()=>{ restart() },[restart])
 
   // Leaderboard
   useEffect(()=>{

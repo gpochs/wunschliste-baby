@@ -124,13 +124,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Send notification email(s) to parents from settings table (fallback to env)
-    let parentEmails: string[] = []
+    const parentEmails: string[] = []
     try {
       const { data, error } = await supabase.from('settings').select('parent_email_1,parent_email_2').eq('id',1).maybeSingle()
       if (error) throw error
       if (data?.parent_email_1) parentEmails.push(data.parent_email_1)
       if (data?.parent_email_2) parentEmails.push(data.parent_email_2)
-    } catch (e) {
+    } catch {
       // fallback
       if (process.env.PARENT_EMAIL_1) parentEmails.push(process.env.PARENT_EMAIL_1)
       if (process.env.PARENT_EMAIL_2) parentEmails.push(process.env.PARENT_EMAIL_2 as string)

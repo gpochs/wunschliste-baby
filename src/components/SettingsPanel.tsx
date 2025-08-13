@@ -23,7 +23,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
     parent_email_1: '',
     parent_email_2: ''
   })
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [leaderboardCount, setLeaderboardCount] = useState<number>(0)
 
