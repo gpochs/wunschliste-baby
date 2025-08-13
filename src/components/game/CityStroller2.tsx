@@ -264,15 +264,15 @@ export default function CityStroller2() {
     // zunächst eine Runde: pro Loop 1 Auto (bis zu gewünschter Anzahl)
     let carsToPlace = 20
     for (let k=0; k<L && carsToPlace>0; k++) { add('car', loops[k]||perimeter, 4); carsToPlace-- }
-    for (let i=0; i<carsToPlace; i++) add('car', loops[(i)%L]||perimeter, 4)
-    for(let i=0;i<12;i++) add('moto', loops[(i+2)%L]||perimeter, 3)
-    for(let i=0;i<8;i++) add('scooter', loops[(i+1)%L]||perimeter, 2)
-    for(let i=0;i<8;i++) add('bike', loops[(i+3)%L]||perimeter, 2)
+    for (let i=0; i<carsToPlace; i++) add('car', loops[(i)%L]||perimeter, 1)
+    for(let i=0;i<12;i++) add('moto', loops[(i+5)%L]||perimeter, 3)
+    for(let i=0;i<8;i++) add('scooter', loops[(i+1)%L]||perimeter, 17)
+    for(let i=0;i<8;i++) add('bike', loops[(i+4)%L]||perimeter, 2)
     for(let i=0;i<5;i++) add('truck', perimeter, 2)
     for(let i=0;i<4;i++) add('ambulance', loops[(i+4)%L]||perimeter, 4)
-    for(let i=0;i<6;i++) add('bus', loops[(i+5)%L]||perimeter, 2)
-    for(let i=0;i<8;i++) add('taxi', loops[(i+6)%L]||perimeter, 4)
-    for(let i=0;i<5;i++) add('police', loops[(i+7)%L]||perimeter, 5)
+    for(let i=0;i<6;i++) add('bus', loops[(i+13)%L]||perimeter, 2)
+    for(let i=0;i<8;i++) add('taxi', loops[(i+9)%L]||perimeter, 4)
+    for(let i=0;i<5;i++) add('police', loops[(i+8)%L]||perimeter, 9)
     vehiclesRef.current = all
   },[buildLoops])
 
