@@ -34,8 +34,10 @@ interface Vehicle {
 type GameStatus = 'playing' | 'win' | 'fail'
 
 const GRID_SIZE = 20
-const START: GridPoint = { x: 1, y: 1 }
-const GOAL: GridPoint = { x: 16, y: 15 }
+// Start unten (links innen), nahe Perimeterstraße
+const START: GridPoint = { x: 2, y: GRID_SIZE - 2 }
+// Ziel oben rechts-nah, aber nicht ganz am Rand; etwas oberhalb der Mitte
+const GOAL: GridPoint = { x: GRID_SIZE - 5, y: 6 }
 
 export default function CityStroller2() {
   const tileSize = useTileSize()
@@ -135,7 +137,9 @@ export default function CityStroller2() {
     const edgePois: Array<{x:number;y:number;icon:string}> = [
       {x:2,y:4,icon:'🏥'},{x:GRID_SIZE-3,y:5,icon:'🏫'},
       {x:4,y:2,icon:'🏛️'},{x:5,y:GRID_SIZE-3,icon:'🏪'},
-      {x:GRID_SIZE-3,y:GRID_SIZE-5,icon:'🏬'},{x:GRID_SIZE-5,y:2,icon:'⛪'}
+      {x:GRID_SIZE-3,y:GRID_SIZE-5,icon:'🏬'},{x:GRID_SIZE-5,y:2,icon:'⛪'},
+      {x:2,y:GRID_SIZE-4,icon:'🚏'},{x:GRID_SIZE-4,y:2,icon:'🗽'},
+      {x:GRID_SIZE-3,y:3,icon:'🏨'},{x:3,y:GRID_SIZE-3,icon:'🏦'}
     ]
     edgePois.forEach(p=>{
       if (m[p.y][p.x]===TileType.EMPTY){
@@ -226,9 +230,12 @@ export default function CityStroller2() {
       if (path.length===0) return
       all.push({ type, speedTilesPerSecond: speed, path, t: Math.random()*path.length })
     }
-    // Hohe Dichte und Vielfalt
+    // Hohe Dichte und Vielfalt – gleichmäßiger verteilt über Loops
     const L = Math.max(loops.length, 1)
-    for(let i=0;i<20;i++) add('car', loops[i%L]||perimeter, 4)
+    // zunächst eine Runde: pro Loop 1 Auto (bis zu gewünschter Anzahl)
+    let carsToPlace = 20
+    for (let k=0; k<L && carsToPlace>0; k++) { add('car', loops[k]||perimeter, 4); carsToPlace-- }
+    for (let i=0; i<carsToPlace; i++) add('car', loops[(i)%L]||perimeter, 4)
     for(let i=0;i<12;i++) add('moto', loops[(i+2)%L]||perimeter, 3)
     for(let i=0;i<8;i++) add('scooter', loops[(i+1)%L]||perimeter, 2)
     for(let i=0;i<8;i++) add('bike', loops[(i+3)%L]||perimeter, 2)
