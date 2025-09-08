@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
               ${item.size ? `<p><strong>Größe:</strong> ${item.size}</p>` : ''}
               ${item.color ? `<p><strong>Farbe:</strong> ${item.color}</p>` : ''}
               ${item.notes ? `<p><strong>Notizen:</strong> ${item.notes}</p>` : ''}
+              ${item.website ? `<p><strong>Website:</strong> <a href="${item.website}" target="_blank" rel="noopener">${item.website}</a></p>` : ''}
             </div>
             
             <p>Vielen Dank für deine Unterstützung!<br>
@@ -155,6 +156,7 @@ export async function POST(request: NextRequest) {
                 ${item.size ? `<p><strong>Größe:</strong> ${item.size}</p>` : ''}
                 ${item.color ? `<p><strong>Farbe:</strong> ${item.color}</p>` : ''}
                 ${item.notes ? `<p><strong>Notizen:</strong> ${item.notes}</p>` : ''}
+                ${item.website ? `<p><strong>Website:</strong> <a href="${item.website}" target="_blank" rel="noopener">${item.website}</a></p>` : ''}
                 <p><strong>Reserviert von:</strong> ${email}</p>
                 <p><strong>Datum:</strong> ${new Date().toLocaleDateString('de-DE')}</p>
               </div>
