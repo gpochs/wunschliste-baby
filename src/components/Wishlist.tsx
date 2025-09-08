@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { WishlistItem } from '@/lib/types'
+import { getItemImageUrl } from '@/lib/itemImage'
 import { supabase } from '@/lib/supabase'
 import ReserveDialog from './ReserveDialog'
 import { Button } from '@/components/ui/button'
@@ -74,7 +75,15 @@ export default function Wishlist() {
         : 'bg-gradient-to-r from-blue-50 to-violet-50 border-blue-200'
     }`}>
       <CardContent className="p-6">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+          <div className="w-full sm:w-40 sm:flex-shrink-0">
+            <img
+              src={getItemImageUrl(item.item, item.website, item.image_url)}
+              alt={item.item}
+              loading="lazy"
+              className="w-full h-28 object-cover rounded-md border"
+            />
+          </div>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
               <h3 className={`text-xl font-bold ${
@@ -171,23 +180,10 @@ export default function Wishlist() {
         </p>
       </div>
 
-      {/* Spiel-Teaser (oberhalb der Liste) */}
-      <div className="text-center mb-12">
-        <Card className="bg-gradient-to-r from-indigo-50 to-violet-50 border-indigo-200 max-w-md mx-auto">
-          <CardContent className="p-8 text-center">
-            <div className="text-4xl mb-4">🎮</div>
-            <h3 className="text-xl font-bold text-violet-800 mb-3">Lust auf eine kleine Pause?</h3>
-            <p className="text-violet-700 mb-6">
-              Spiele &quot;City Stroller&quot; - bringe den Kinderwagen sicher durch die Stadt! 🚗
-            </p>
-            <Link href="/game">
-              <Button className="bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-6 py-3">
-                <Gamepad2 className="h-5 w-5 mr-2" />
-                Spiel spielen
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+      {/* Bilder unter Titel */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+        <img src="/images/hochzeit.jpg" alt="Hochzeit" className="w-full h-64 object-cover rounded-xl border" />
+        <img src="/images/baby-14-08.jpg" alt="Baby 14.08" className="w-full h-64 object-cover rounded-xl border" />
       </div>
 
       {/* Verfügbare Items */}
@@ -215,6 +211,22 @@ export default function Wishlist() {
             {availableItems.map(item => renderItem(item, false))}
           </div>
         )}
+      </div>
+
+      {/* City Stroller inline zwischen den Listen */}
+      <div className="mb-16">
+        <Card className="bg-white border-2 border-indigo-200">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-indigo-700 flex items-center gap-3">
+              <Gamepad2 className="h-7 w-7" /> City Stroller
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-xl overflow-hidden border">
+              <iframe title="City Stroller" src="/game" className="w-full h-[680px]" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Reservierte Items */}

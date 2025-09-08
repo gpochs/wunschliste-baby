@@ -4,6 +4,7 @@ export interface WishlistItem {
   size?: string
   color?: string
   website?: string
+  image_url?: string
   notes?: string
   reserved: boolean
   reserved_by?: string

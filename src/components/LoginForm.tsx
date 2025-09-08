@@ -15,6 +15,8 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'baby25'
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -24,7 +26,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 500))
       
-      if (password === 'baby25') {
+      if (password === ADMIN_PASSWORD) {
         onLogin()
       } else {
         setError('Falsches Passwort!')

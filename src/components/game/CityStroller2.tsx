@@ -36,8 +36,8 @@ type GameStatus = 'playing' | 'win' | 'fail'
 const GRID_SIZE = 20
 // Start unten links (innen) auf der Perimeterstraße
 const START: GridPoint = { x: 2, y: GRID_SIZE - 2 }
-// Ziel: oben rechts-nah, 5 Felder vom oberen Rand, 5 Felder vom rechten Rand (2x2 Zielblock)
-const GOAL: GridPoint = { x: GRID_SIZE - 7, y: 5 }
+// Ziel: 8 Felder vom rechten Rand, 4 Felder vom oberen Rand (2x2 Zielblock)
+const GOAL: GridPoint = { x: GRID_SIZE - 9, y: 4 }
 
 export default function CityStroller2() {
   const tileSize = useTileSize()
@@ -217,13 +217,15 @@ export default function CityStroller2() {
       for(let y=b-1;y>t;y--) path.push({x:l,y})
       if (path.every(p=>m[p.y]?.[p.x]===TileType.ROAD)) loops.push(path)
     }
-    // Perimeter + viele innere Rechtecke
+    // Perimeter + viele innere Rechtecke (großflächiger)
     const frames = [
       {t:1,l:1,r:GRID_SIZE-2,b:GRID_SIZE-2},
       {t:2,l:2,r:GRID_SIZE-3,b:GRID_SIZE-3},
       {t:3,l:3,r:GRID_SIZE-4,b:GRID_SIZE-4},
       {t:4,l:4,r:GRID_SIZE-5,b:GRID_SIZE-5},
+      {t:5,l:5,r:GRID_SIZE-6,b:GRID_SIZE-6},
       {t:6,l:6,r:GRID_SIZE-7,b:GRID_SIZE-7},
+      {t:7,l:7,r:GRID_SIZE-8,b:GRID_SIZE-8},
       {t:8,l:8,r:GRID_SIZE-9,b:GRID_SIZE-9},
     ]
     frames.forEach(f=>pushRect(f.t,f.l,f.r,f.b))
@@ -242,12 +244,14 @@ export default function CityStroller2() {
       }
     }
 
-    // Lange Band-Loops: untere Stadthälfte (erzwingt Verkehr unten)
-    pushRect(12, 2, GRID_SIZE-3, 16)
-    pushRect(14, 2, GRID_SIZE-3, 16)
+    // Lange Band-Loops großflächig
+    pushRect(10, 2, GRID_SIZE-3, GRID_SIZE-3)
+    pushRect(12, 2, GRID_SIZE-3, GRID_SIZE-3)
+    pushRect(14, 2, GRID_SIZE-3, GRID_SIZE-3)
 
-    // Vertikale Band-Loops für rechten/linken Sektor
-    pushRect(2, 12, 14, GRID_SIZE-3)
+    // Vertikale Band-Loops für rechten/linken Sektor (weit)
+    pushRect(2, 10, GRID_SIZE-3, GRID_SIZE-3)
+    pushRect(2, 12, GRID_SIZE-3, GRID_SIZE-3)
     pushRect(2, GRID_SIZE-5, GRID_SIZE-3, GRID_SIZE-3)
     return loops
   },[])
