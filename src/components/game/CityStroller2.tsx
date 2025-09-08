@@ -80,6 +80,22 @@ export default function CityStroller2() {
     rows.forEach(r => { for (let x = 1; x < GRID_SIZE - 1; x++) m[r][x] = TileType.ROAD })
     cols.forEach(c => { for (let y = 1; y < GRID_SIZE - 1; y++) m[y][c] = TileType.ROAD })
 
+    // Realistischere Hierarchie: breite Hauptstraßen (2 Kacheln) als Boulevards
+    const arterialRows = [5, 10, 15]
+    const arterialCols = [5, 10, 15]
+    arterialRows.forEach(r => {
+      for (let x = 1; x < GRID_SIZE - 1; x++) {
+        m[r][x] = TileType.ROAD
+        if (r+1 < GRID_SIZE-1) m[r+1][x] = TileType.ROAD
+      }
+    })
+    arterialCols.forEach(c => {
+      for (let y = 1; y < GRID_SIZE - 1; y++) {
+        m[y][c] = TileType.ROAD
+        if (c+1 < GRID_SIZE-1) m[y][c+1] = TileType.ROAD
+      }
+    })
+
     // Perimeter-Ringstraße
     for (let i = 1; i < GRID_SIZE - 1; i++) {
       m[1][i] = TileType.ROAD
@@ -94,6 +110,20 @@ export default function CityStroller2() {
     m[GOAL.y][GOAL.x+1] = TileType.GOAL
     m[GOAL.y+1][GOAL.x] = TileType.GOAL
     m[GOAL.y+1][GOAL.x+1] = TileType.GOAL
+
+    // Ring-Straßen um das Ziel anlegen (1 Tile Dicke) – für garantierten Verkehr rundherum
+    const top = Math.max(1, GOAL.y - 2)
+    const bottom = Math.min(GRID_SIZE - 2, GOAL.y + 3)
+    const left = Math.max(1, GOAL.x - 2)
+    const right = Math.min(GRID_SIZE - 2, GOAL.x + 3)
+    for (let x = left; x <= right; x++) {
+      if (m[top][x] !== TileType.GOAL) m[top][x] = TileType.ROAD
+      if (m[bottom][x] !== TileType.GOAL) m[bottom][x] = TileType.ROAD
+    }
+    for (let y = top; y <= bottom; y++) {
+      if (m[y][left] !== TileType.GOAL) m[y][left] = TileType.ROAD
+      if (m[y][right] !== TileType.GOAL) m[y][right] = TileType.ROAD
+    }
 
     // Dichte POI Blöcke (keine Randkacheln)
     const blocks: Array<{ x:number; y:number; w:number; h:number; icon:string }>= [
@@ -179,7 +209,7 @@ export default function CityStroller2() {
     }
 
     // Wälder (Cluster) / Parks
-    const forests = [ [ {x:16,y:6},{x:16,y:7},{x:15,y:7} ], [ {x:7,y:15},{x:8,y:15},{x:7,y:14} ] ]
+    const forests = [ [ {x:16,y:6},{x:16,y:7},{x:15,y:7} ], [ {x:7,y:15},{x:8,y:15},{x:7,y:14} ], [ {x:12,y:3},{x:13,y:3},{x:12,y:4} ] ]
     forests.flat().forEach(p=>{ if (m[p.y][p.x]===TileType.EMPTY) m[p.y][p.x]=TileType.TREE })
 
     // Deko (Ampeln/Plaza… blockierend laut Vorgabe)
@@ -197,6 +227,28 @@ export default function CityStroller2() {
       }
     })
     decorIconByKeyRef.current = decorMap
+
+    // Straßenringe um Points of Interest (POIs und Deko) anlegen, damit Fahrzeuge rundherum fahren können
+    const carveRoadAround = (cx:number, cy:number) => {
+      const neighbors: GridPoint[] = [
+        {x:cx-1,y:cy},{x:cx+1,y:cy},{x:cx,y:cy-1},{x:cx,y:cy+1},
+        {x:cx-1,y:cy-1},{x:cx+1,y:cy-1},{x:cx-1,y:cy+1},{x:cx+1,y:cy+1},
+      ]
+      neighbors.forEach(p=>{
+        if (p.x>0 && p.y>0 && p.x<GRID_SIZE-1 && p.y<GRID_SIZE-1) {
+          if (m[p.y][p.x] !== TileType.GOAL) m[p.y][p.x] = TileType.ROAD
+        }
+      })
+    }
+
+    Object.keys(poiMap).forEach(key=>{
+      const [sx,sy] = key.split(',').map(Number)
+      carveRoadAround(sx, sy)
+    })
+    Object.keys(decorMap).forEach(key=>{
+      const [sx,sy] = key.split(',').map(Number)
+      carveRoadAround(sx, sy)
+    })
 
     // Zusätzliche Hindernisse nahe am Rand (ohne die Perimeterstraße zu blockieren)
     const edgeBand: GridPoint[] = [
@@ -285,13 +337,20 @@ export default function CityStroller2() {
     ]
     const loopsAround = nearGoal.map(f=>{
       const path: GridPoint[] = []
-      for(let x=f.l;x<=f.r;x++) path.push({x,y:f.t})
-      for(let y=f.t+1;y<=f.b;y++) path.push({x:f.r,y})
-      for(let x=f.r-1;x>=f.l;x--) path.push({x,y:f.b})
-      for(let y=f.b-1;y>f.t;y--) path.push({x:f.l,y})
+      for(let x=f.l;x<=f.r;x++) if (m[f.t][x]===TileType.ROAD) path.push({x,y:f.t})
+      for(let y=f.t+1;y<=f.b;y++) if (m[y]?.[f.r]===TileType.ROAD) path.push({x:f.r,y})
+      for(let x=f.r-1;x>=f.l;x--) if (m[f.b]?.[x]===TileType.ROAD) path.push({x,y:f.b})
+      for(let y=f.b-1;y>f.t;y--) if (m[y]?.[f.l]===TileType.ROAD) path.push({x:f.l,y})
       return path
     })
-    loopsAround.forEach(p=>{ if(p.length>0){ all.push({ type:'car', speedTilesPerSecond:4, path:p, t:Math.random()*p.length }) } })
+    // Füge dedizierte Ziel-Orbiter hinzu (verschiedene Fahrzeugtypen), die dauerhaft kreisen
+    loopsAround.forEach(p=>{
+      if(p.length>0){
+        all.push({ type:'car', speedTilesPerSecond:4, path:p, t:Math.random()*p.length })
+        all.push({ type:'moto', speedTilesPerSecond:3, path:p, t:Math.random()*p.length })
+        all.push({ type:'taxi', speedTilesPerSecond:4, path:p, t:Math.random()*p.length })
+      }
+    })
     vehiclesRef.current = all
   },[buildLoops])
 
