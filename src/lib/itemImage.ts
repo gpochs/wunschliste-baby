@@ -24,11 +24,11 @@ function getScreenshotFromWebsite(website?: string): string | null {
 
 export function getItemImageUrl(name: string, website?: string, explicit?: string): string {
   if (explicit) return explicit
-  const screenshot = getScreenshotFromWebsite(website)
-  if (screenshot) return screenshot
-  const fav = getFaviconFromWebsite(website)
+  // Server route will attempt: OG image → apple-touch-icon/icon → screenshot
+  if (website) return `/api/item-image?q=${encodeURIComponent(name)}&website=${encodeURIComponent(website)}`
+  // Fallbacks when no website
+  const fav = getFaviconFromWebsite(undefined)
   if (fav) return fav
-  // Last attempt: Google CSE via serverless route (requires GOOGLE_CSE_KEY and GOOGLE_CSE_CX)
   return `/api/item-image?q=${encodeURIComponent(name)}`
 }
 

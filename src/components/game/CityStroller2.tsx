@@ -264,12 +264,12 @@ export default function CityStroller2() {
       if (path.length===0) return
       all.push({ type, speedTilesPerSecond: speed, path, t: Math.random()*path.length })
     }
-    // Verdoppelt: 6 Autos (4/s), 4 Motorräder (3/s), 4 Scooter (2/s), 4 Velos (2/s) = 18 Fahrzeuge
-    const pick = (i: number) => loops[i % Math.max(1, loops.length)] || perimeter
-    for (let i = 0; i < 6; i++) add('car', pick(i), 4)
-    for (let i = 0; i < 4; i++) add('moto', pick(i + 6), 3)
-    for (let i = 0; i < 4; i++) add('scooter', pick(i + 10), 2)
-    for (let i = 0; i < 4; i++) add('bike', pick(i + 14), 2)
+    // Deutlich mehr Fahrzeuge über großflächige Loops verteilt
+    const pick = (i: number) => loops[(i * 3) % Math.max(1, loops.length)] || perimeter
+    for (let i = 0; i < 10; i++) add('car', pick(i), 4)
+    for (let i = 0; i < 6; i++) add('moto', pick(i + 20), 3)
+    for (let i = 0; i < 6; i++) add('scooter', pick(i + 40), 2)
+    for (let i = 0; i < 6; i++) add('bike', pick(i + 60), 2)
     vehiclesRef.current = all
   },[buildLoops])
 

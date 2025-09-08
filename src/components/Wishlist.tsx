@@ -223,7 +223,10 @@ export default function Wishlist() {
           </CardHeader>
           <CardContent>
             <div className="rounded-xl overflow-hidden border">
-              <iframe title="City Stroller" src="/game" className="w-full h-[680px]" />
+              <details>
+                <summary className="cursor-pointer select-none px-4 py-3 text-indigo-700 font-semibold bg-indigo-50 hover:bg-indigo-100">City Stroller starten</summary>
+                <iframe title="City Stroller" src="/game" className="w-full h-[680px]" />
+              </details>
             </div>
           </CardContent>
         </Card>
