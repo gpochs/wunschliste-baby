@@ -125,43 +125,39 @@ export default function CityStroller2() {
       if (m[y][right] !== TileType.GOAL) m[y][right] = TileType.ROAD
     }
 
-    // Dichte POI Blöcke (keine Randkacheln)
-    const blocks: Array<{ x:number; y:number; w:number; h:number; icon:string }>= [
-      // Kern-POIs
-      { x:5, y:4, w:2, h:2, icon:'🏫' }, // Schule
-      { x:12, y:4, w:3, h:3, icon:'🏬' }, // Mall
-      { x:10, y:12, w:3, h:2, icon:'🏥' }, // Spital
-      { x:6, y:12, w:4, h:3, icon:'🏟️' }, // Stadion
-      { x:8, y:6, w:2, h:2, icon:'🍽️' }, // Restaurant
-      { x:4, y:6, w:2, h:2, icon:'🏛️' }, // Rathaus
-      { x:3, y:10, w:2, h:2, icon:'🏠' },
-      { x:15, y:6, w:2, h:2, icon:'🏢' }, // Bürogebäude
-      { x:11, y:14, w:3, h:2, icon:'🏨' }, // Hotel
-      { x:15, y:14, w:2, h:2, icon:'🏦' }, // Bank
-      { x:13, y:9, w:2, h:2, icon:'🏙️' }, // Skyline
-      { x:5, y:8, w:2, h:2, icon:'🏘️' }, // Wohnblock
-      // Erweiterte Stadtvielfalt
-      { x:7, y:9, w:2, h:2, icon:'⛪' }, // Kirche
-      { x:9, y:7, w:2, h:2, icon:'🏗️' }, // Baustelle
-      { x:12, y:7, w:2, h:2, icon:'🏫' }, // zweite Schule
-      { x:14, y:10, w:2, h:2, icon:'🛍️' }, // Einkaufszeile
-      { x:9, y:11, w:2, h:2, icon:'🏥' }, // Klinik
-      { x:6, y:9, w:2, h:2, icon:'🏢' }, // Hochhaus
-      { x:4, y:12, w:2, h:2, icon:'🏣' }, // Postamt
-      { x:7, y:14, w:2, h:2, icon:'🚒' }, // Feuerwehr
-      { x:12, y:13, w:2, h:2, icon:'🖼️' }, // Museum
-      { x:8, y:10, w:2, h:2, icon:'🏪' }, // Laden
-      { x:6, y:7, w:2, h:2, icon:'🧱' }, // Mauer/Block
-      { x:14, y:7, w:2, h:2, icon:'🏢' }, // Hochhaus 2
-      { x:10, y:6, w:2, h:2, icon:'🏘️' }, // Wohnblock 2
-      { x:3, y:8, w:2, h:2, icon:'🏨' }, // Hotel 2
+    // Dichte POI Blöcke (keine Randkacheln) — Ziel: mindestens 15 POIs
+    const blocks: Array<{ x:number; y:number; w:number; h:number; icon:string; label?:string }>= [
+      // 1 Schule, 2 Mall, 3 Spital, 4 Stadion, 5 Rathaus, 6 Wohnblock, 7 Hochhaus, 8 Kirche,
+      { x:5, y:4, w:2, h:2, icon:'🏫' },
+      { x:12, y:4, w:3, h:3, icon:'🏬' },
+      { x:10, y:12, w:3, h:2, icon:'🏥' },
+      { x:6, y:12, w:4, h:3, icon:'🏟️' },
+      { x:4, y:6, w:2, h:2, icon:'🏛️' },
+      { x:5, y:8, w:2, h:2, icon:'🏘️' },
+      { x:15, y:6, w:2, h:2, icon:'🏢' },
+      { x:7, y:9, w:2, h:2, icon:'⛪' },
+      // 9 Feuerwehr, 10 Museum, 11 Hotel, 12 Bank, 13 Einkaufszeile, 14 Restaurant, 15 Skyline
+      { x:7, y:14, w:2, h:2, icon:'🚒' },
+      { x:12, y:13, w:2, h:2, icon:'🖼️' },
+      { x:11, y:14, w:3, h:2, icon:'🏨' },
+      { x:15, y:14, w:2, h:2, icon:'🏦' },
+      { x:14, y:10, w:2, h:2, icon:'🛍️' },
+      { x:8, y:6, w:2, h:2, icon:'🍽️' },
+      { x:13, y:9, w:2, h:2, icon:'🏙️' },
+      // 16 KiTa (2x2) mit Label
+      { x:9, y:4, w:2, h:2, icon:'🧒', label:'KiTa' },
     ]
     const poiMap: Record<string,string> = {}
     blocks.forEach(b=>{
       for(let yy=b.y; yy<b.y+b.h; yy++){
         for(let xx=b.x; xx<b.x+b.w; xx++){
           if (m[yy][xx]===TileType.EMPTY) m[yy][xx]=TileType.WALL
-          poiMap[`${xx},${yy}`]=b.icon
+          // Für KiTa einmalig mit Label beschriften (oben links)
+          if (b.label && xx===b.x && yy===b.y) {
+            poiMap[`${xx},${yy}`]=`${b.icon} ${b.label}`
+          } else {
+            poiMap[`${xx},${yy}`]=b.icon
+          }
         }
       }
     })
@@ -469,7 +465,12 @@ export default function CityStroller2() {
       content='🌳'
     } else if (t===TileType.GOAL){
       cls='bg-amber-300 border border-amber-500 shadow-lg'
-      content='🏡'
+      content=(
+        <div className="text-[10px] font-bold text-amber-900 flex flex-col items-center leading-none select-none">
+          <span>🏡</span>
+          <span>HOME</span>
+        </div>
+      )
     } else if (t===TileType.DECOR){
       cls='bg-blue-200 border border-blue-300'
       content=decorIconByKeyRef.current[`${x},${y}`] ?? '🚦'
