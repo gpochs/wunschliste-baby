@@ -53,6 +53,18 @@ export default function AddItemDialog({ open, onOpenChange, onAdd, editingItem }
       return
     }
 
+    // Website ist Pflicht: valide http/https URL
+    try {
+      const u = new URL(formData.website)
+      if (!(u.protocol === 'http:' || u.protocol === 'https:')) {
+        alert('Bitte gib eine gültige Website-URL mit http/https an')
+        return
+      }
+    } catch {
+      alert('Bitte gib eine gültige Website-URL an (z. B. https://beispiel.de)')
+      return
+    }
+
     setLoading(true)
     
     try {
@@ -130,6 +142,7 @@ export default function AddItemDialog({ open, onOpenChange, onAdd, editingItem }
               value={formData.website}
               onChange={(e) => handleInputChange('website', e.target.value)}
               placeholder="https://www.beispiel.de"
+              required
             />
           </div>
           

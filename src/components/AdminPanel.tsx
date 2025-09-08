@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { WishlistItem } from '@/lib/types'
+import { getItemImageUrl } from '@/lib/itemImage'
 import { supabase } from '@/lib/supabase'
 import AddItemDialog from './AddItemDialog'
 import SettingsPanel from './SettingsPanel'
@@ -126,7 +127,15 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
         : 'bg-gradient-to-r from-blue-50 to-violet-50 border-2 border-blue-200'
     }`}>
       <CardContent className="p-6">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
+          <div className="w-32 sm:w-40 flex-shrink-0">
+            <img
+              src={getItemImageUrl(item.item, item.website, (item as any).image_url)}
+              alt={item.item}
+              loading="lazy"
+              className="w-full h-24 sm:h-28 object-cover rounded-md border"
+            />
+          </div>
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
               <h3 className={`text-xl font-bold ${

@@ -1,4 +1,4 @@
-const PLACEHOLDER = '/images/placeholder-gift.jpg'
+const PLACEHOLDER = '/globe.svg'
 
 function getFaviconFromWebsite(website?: string): string | null {
   if (!website) return null
@@ -27,8 +27,6 @@ export function getItemImageUrl(name: string, website?: string, explicit?: strin
   // Server route will attempt: OG image → apple-touch-icon/icon → screenshot
   if (website) return `/api/item-image?q=${encodeURIComponent(name)}&website=${encodeURIComponent(website)}`
   // Fallbacks when no website
-  const fav = getFaviconFromWebsite(undefined)
-  if (fav) return fav
   return `/api/item-image?q=${encodeURIComponent(name)}`
 }
 

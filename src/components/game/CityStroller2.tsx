@@ -36,8 +36,8 @@ type GameStatus = 'playing' | 'win' | 'fail'
 const GRID_SIZE = 20
 // Start unten links (innen) auf der Perimeterstraße
 const START: GridPoint = { x: 2, y: GRID_SIZE - 2 }
-// Ziel: 8 Felder vom rechten Rand, 4 Felder vom oberen Rand (2x2 Zielblock)
-const GOAL: GridPoint = { x: GRID_SIZE - 9, y: 4 }
+// Ziel: 10 Felder vom rechten Rand, 6 Felder vom oberen Rand (2x2 Zielblock)
+const GOAL: GridPoint = { x: GRID_SIZE - 11, y: 6 }
 
 export default function CityStroller2() {
   const tileSize = useTileSize()
@@ -264,12 +264,12 @@ export default function CityStroller2() {
       if (path.length===0) return
       all.push({ type, speedTilesPerSecond: speed, path, t: Math.random()*path.length })
     }
-    // Deutlich mehr Fahrzeuge über großflächige Loops verteilt
-    const pick = (i: number) => loops[(i * 3) % Math.max(1, loops.length)] || perimeter
-    for (let i = 0; i < 10; i++) add('car', pick(i), 4)
-    for (let i = 0; i < 6; i++) add('moto', pick(i + 20), 3)
-    for (let i = 0; i < 6; i++) add('scooter', pick(i + 40), 2)
-    for (let i = 0; i < 6; i++) add('bike', pick(i + 60), 2)
+    // Noch mehr Fahrzeuge über großflächige Loops verteilt
+    const pick = (i: number) => loops[(i * 5) % Math.max(1, loops.length)] || perimeter
+    for (let i = 0; i < 14; i++) add('car', pick(i), 4)
+    for (let i = 0; i < 10; i++) add('moto', pick(i + 40), 3)
+    for (let i = 0; i < 10; i++) add('scooter', pick(i + 80), 2)
+    for (let i = 0; i < 10; i++) add('bike', pick(i + 120), 2)
     vehiclesRef.current = all
   },[buildLoops])
 
