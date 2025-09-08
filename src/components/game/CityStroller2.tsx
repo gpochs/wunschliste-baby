@@ -135,23 +135,26 @@ export default function CityStroller2() {
       { x:8, y:6, w:2, h:2, icon:'🍽️' }, // Restaurant
       { x:4, y:6, w:2, h:2, icon:'🏛️' }, // Rathaus
       { x:3, y:10, w:2, h:2, icon:'🏠' },
-      { x:15, y:6, w:2, h:2, icon:'🏢' },
-      { x:11, y:14, w:3, h:2, icon:'🏨' },
-      { x:15, y:14, w:2, h:2, icon:'🏦' },
-      { x:13, y:9, w:2, h:2, icon:'🏙️' },
-      { x:5, y:8, w:2, h:2, icon:'🏘️' },
+      { x:15, y:6, w:2, h:2, icon:'🏢' }, // Bürogebäude
+      { x:11, y:14, w:3, h:2, icon:'🏨' }, // Hotel
+      { x:15, y:14, w:2, h:2, icon:'🏦' }, // Bank
+      { x:13, y:9, w:2, h:2, icon:'🏙️' }, // Skyline
+      { x:5, y:8, w:2, h:2, icon:'🏘️' }, // Wohnblock
       // Erweiterte Stadtvielfalt
-      { x:7, y:9, w:2, h:2, icon:'⛪' },
+      { x:7, y:9, w:2, h:2, icon:'⛪' }, // Kirche
       { x:9, y:7, w:2, h:2, icon:'🏗️' }, // Baustelle
       { x:12, y:7, w:2, h:2, icon:'🏫' }, // zweite Schule
       { x:14, y:10, w:2, h:2, icon:'🛍️' }, // Einkaufszeile
       { x:9, y:11, w:2, h:2, icon:'🏥' }, // Klinik
-      { x:6, y:9, w:2, h:2, icon:'🏢' },
+      { x:6, y:9, w:2, h:2, icon:'🏢' }, // Hochhaus
       { x:4, y:12, w:2, h:2, icon:'🏣' }, // Postamt
-      { x:7, y:14, w:2, h:2, icon:'🏚️' }, // altes Haus
-      { x:12, y:13, w:2, h:2, icon:'🏫' },
+      { x:7, y:14, w:2, h:2, icon:'🚒' }, // Feuerwehr
+      { x:12, y:13, w:2, h:2, icon:'🖼️' }, // Museum
       { x:8, y:10, w:2, h:2, icon:'🏪' }, // Laden
       { x:6, y:7, w:2, h:2, icon:'🧱' }, // Mauer/Block
+      { x:14, y:7, w:2, h:2, icon:'🏢' }, // Hochhaus 2
+      { x:10, y:6, w:2, h:2, icon:'🏘️' }, // Wohnblock 2
+      { x:3, y:8, w:2, h:2, icon:'🏨' }, // Hotel 2
     ]
     const poiMap: Record<string,string> = {}
     blocks.forEach(b=>{
@@ -216,9 +219,9 @@ export default function CityStroller2() {
     const decorSpots: GridPoint[] = [
       {x:6,y:6},{x:9,y:9},{x:12,y:12},{x:5,y:13},{x:14,y:5},{x:9,y:6},{x:12,y:9},{x:7,y:3},
       {x:3,y:8},{x:8,y:3},{x:10,y:8},{x:11,y:6},{x:13,y:11},{x:6,y:11},{x:4,y:9},{x:15,y:11},
-      {x:2,y:10},{x:10,y:2},{x:17,y:10},{x:10,y:17}
+      {x:2,y:10},{x:10,y:2},{x:17,y:10},{x:10,y:17},{x:4,y:4},{x:15,y:9},{x:9,y:15}
     ]
-    const decorIcons = ['🚦','⛲','🅿️','☕','🍔','🚏','🎡','🚌','🚦','🌉','🚲','🏞️','🧋','🍟','🧁','🎠','🏟️','🏗️','🏢','🏙️']
+    const decorIcons = ['🚦','⛲','🅿️','☕','🍔','🚏','🎡','🚌','🚦','🌉','🚲','🏞️','🧋','🍟','🧁','🎠','🏟️','🏗️','🏢','🏙️','🌳','🏬','🏘️']
     const decorMap: Record<string,string> = {}
     decorSpots.forEach((p,i)=>{
       if (m[p.y][p.x]===TileType.EMPTY) {
@@ -327,10 +330,11 @@ export default function CityStroller2() {
     }
     // Noch mehr Fahrzeuge über großflächige Loops verteilt
     const pick = (i: number) => loops[(i * 5) % Math.max(1, loops.length)] || perimeter
-    for (let i = 0; i < 18; i++) add('car', pick(i), 4)
-    for (let i = 0; i < 14; i++) add('moto', pick(i + 40), 3)
-    for (let i = 0; i < 14; i++) add('scooter', pick(i + 80), 2)
-    for (let i = 0; i < 14; i++) add('bike', pick(i + 120), 2)
+    // leicht reduzierte Anzahl Fahrzeuge
+    for (let i = 0; i < 12; i++) add('car', pick(i), 4)
+    for (let i = 0; i < 10; i++) add('moto', pick(i + 40), 3)
+    for (let i = 0; i < 10; i++) add('scooter', pick(i + 80), 2)
+    for (let i = 0; i < 10; i++) add('bike', pick(i + 120), 2)
     // Zusätzlicher Verkehr explizit um das Ziel: kleine Rundkurse
     const nearGoal = [
       { t: GOAL.y-2, l: GOAL.x-2, r: GOAL.x+3, b: GOAL.y+3 },
