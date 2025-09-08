@@ -246,9 +246,17 @@ export default function CityStroller2() {
     }
 
     // Lange Band-Loops großflächig
-    pushRect(10, 2, GRID_SIZE-3, GRID_SIZE-3)
-    pushRect(12, 2, GRID_SIZE-3, GRID_SIZE-3)
-    pushRect(14, 2, GRID_SIZE-3, GRID_SIZE-3)
+    pushRect(9, 2, GRID_SIZE-3, GRID_SIZE-3)
+    pushRect(11, 2, GRID_SIZE-3, GRID_SIZE-3)
+    pushRect(13, 2, GRID_SIZE-3, GRID_SIZE-3)
+    // Loops rund um das Ziel (engere Ringe), damit Verkehr das Ziel periodisch blockiert
+    const gx = GOAL.x, gy = GOAL.y
+    const goalFrames = [
+      { t: gy-2, l: gx-2, r: gx+3, b: gy+3 },
+      { t: gy-3, l: gx-3, r: gx+4, b: gy+4 },
+      { t: gy-4, l: gx-4, r: gx+5, b: gy+5 },
+    ]
+    goalFrames.forEach(f=>pushRect(f.t,f.l,f.r,f.b))
 
     // Vertikale Band-Loops für rechten/linken Sektor (weit)
     pushRect(2, 10, GRID_SIZE-3, GRID_SIZE-3)
@@ -267,10 +275,23 @@ export default function CityStroller2() {
     }
     // Noch mehr Fahrzeuge über großflächige Loops verteilt
     const pick = (i: number) => loops[(i * 5) % Math.max(1, loops.length)] || perimeter
-    for (let i = 0; i < 14; i++) add('car', pick(i), 4)
-    for (let i = 0; i < 10; i++) add('moto', pick(i + 40), 3)
-    for (let i = 0; i < 10; i++) add('scooter', pick(i + 80), 2)
-    for (let i = 0; i < 10; i++) add('bike', pick(i + 120), 2)
+    for (let i = 0; i < 18; i++) add('car', pick(i), 4)
+    for (let i = 0; i < 14; i++) add('moto', pick(i + 40), 3)
+    for (let i = 0; i < 14; i++) add('scooter', pick(i + 80), 2)
+    for (let i = 0; i < 14; i++) add('bike', pick(i + 120), 2)
+    // Zusätzlicher Verkehr explizit um das Ziel: kleine Rundkurse
+    const nearGoal = [
+      { t: GOAL.y-2, l: GOAL.x-2, r: GOAL.x+3, b: GOAL.y+3 },
+    ]
+    const loopsAround = nearGoal.map(f=>{
+      const path: GridPoint[] = []
+      for(let x=f.l;x<=f.r;x++) path.push({x,y:f.t})
+      for(let y=f.t+1;y<=f.b;y++) path.push({x:f.r,y})
+      for(let x=f.r-1;x>=f.l;x--) path.push({x,y:f.b})
+      for(let y=f.b-1;y>f.t;y--) path.push({x:f.l,y})
+      return path
+    })
+    loopsAround.forEach(p=>{ if(p.length>0){ all.push({ type:'car', speedTilesPerSecond:4, path:p, t:Math.random()*p.length }) } })
     vehiclesRef.current = all
   },[buildLoops])
 
@@ -444,7 +465,7 @@ export default function CityStroller2() {
 
   const canSave = playerName.trim().length>0
   return (
-    <div className="relative">
+    <div className="relative pb-28 sm:pb-0">
       <div className="bg-gradient-to-r from-indigo-50 to-violet-50 p-4 border-b border-indigo-200">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-indigo-800">City Stroller</h3>
@@ -531,8 +552,8 @@ export default function CityStroller2() {
         )}
       </div>
 
-      {/* Mobile D-Pad */}
-      <div className="bg-gray-50 p-4 border-t border-gray-200 sm:hidden">
+      {/* Mobile D-Pad (on-screen arrows) */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-gray-50/90 backdrop-blur p-4 border-t border-gray-200 sm:hidden" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
         <div className="flex justify-center items-center space-x-4">
           <Button variant="outline" size="lg" onClick={()=>move(0,-1)} disabled={gameStatus!=='playing'} className="w-16 h-16" aria-label="Nach oben">
             <ChevronUp className="h-6 w-6" />

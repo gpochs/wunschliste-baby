@@ -27,7 +27,8 @@ export function getItemImageUrl(name: string, website?: string, explicit?: strin
   // Server route will attempt: OG image → apple-touch-icon/icon → screenshot
   if (website) return `/api/item-image?q=${encodeURIComponent(name)}&website=${encodeURIComponent(website)}`
   // Fallbacks when no website
-  return `/api/item-image?q=${encodeURIComponent(name)}`
+  const query = encodeURIComponent(`baby ${name}`)
+  return `https://source.unsplash.com/800x600/?${query}`
 }
 
 
