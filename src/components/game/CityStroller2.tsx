@@ -151,7 +151,7 @@ export default function CityStroller2() {
     blocks.forEach(b=>{
       for(let yy=b.y; yy<b.y+b.h; yy++){
         for(let xx=b.x; xx<b.x+b.w; xx++){
-          if (m[yy][xx]===TileType.EMPTY) m[yy][xx]=TileType.WALL
+          if (m[yy] && m[yy][xx] !== TileType.GOAL) m[yy][xx]=TileType.WALL
           // Für KiTa einmalig mit Label beschriften (oben links)
           if (b.label && xx===b.x && yy===b.y) {
             poiMap[`${xx},${yy}`]=`${b.icon} ${b.label}`
@@ -161,6 +161,25 @@ export default function CityStroller2() {
         }
       }
     })
+
+    // Sicherstellen: Mindestens 12 sichtbare POI-Icons
+    const ensurePoiIcons = () => {
+      const needed = 12
+      const current = Object.keys(poiMap).length
+      if (current >= needed) return
+      const fillerIcons = ['🏥','🏫','🏛️','🏦','🏪','🏬','⛪','🏨','🏢','🏘️','🖼️','🚒','🏟️','🛍️','🍽️']
+      let idx = 0
+      for (let y = 3; y < GRID_SIZE-3 && Object.keys(poiMap).length < needed; y+=2) {
+        for (let x = 3; x < GRID_SIZE-3 && Object.keys(poiMap).length < needed; x+=2) {
+          if (m[y][x] === TileType.EMPTY) {
+            m[y][x] = TileType.WALL
+            poiMap[`${x},${y}`] = fillerIcons[idx % fillerIcons.length]
+            idx++
+          }
+        }
+      }
+    }
+    ensurePoiIcons()
     poiIconByKeyRef.current = poiMap
 
     // POIs direkt am inneren Spielrand (an die Perimeterstraße angrenzend)
