@@ -182,8 +182,8 @@ export default function Wishlist() {
 
       {/* Bilder unter Titel */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-        <img src="/images/hochzeit.jpg" alt="Hochzeit" className="w-full h-64 object-cover rounded-xl border" />
-        <img src="/images/baby-14-08.jpg" alt="Baby 14.08" className="w-full h-64 object-cover rounded-xl border" />
+        <img src="/images/Hochzeit_JG-68.jpg" alt="Hochzeit" className="w-full h-64 object-cover rounded-xl border" />
+        <img src="/images/Baby 14.08.png" alt="Baby 14.08" className="w-full h-64 object-cover rounded-xl border" />
       </div>
 
       {/* Verfügbare Items */}
