@@ -28,7 +28,8 @@ export function getItemImageUrl(name: string, website?: string, explicit?: strin
   if (screenshot) return screenshot
   const fav = getFaviconFromWebsite(website)
   if (fav) return fav
-  return PLACEHOLDER
+  // Last attempt: Google CSE via serverless route (requires GOOGLE_CSE_KEY and GOOGLE_CSE_CX)
+  return `/api/item-image?q=${encodeURIComponent(name)}`
 }
 
 
