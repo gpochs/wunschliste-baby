@@ -130,7 +130,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
         <div className="flex items-start justify-between gap-4">
           <div className="w-32 sm:w-40 flex-shrink-0">
             <img
-              src={getItemImageUrl(item.item, item.website, (item as any).image_url)}
+              src={getItemImageUrl(item.item, item.website, item.image_url)}
               alt={item.item}
               loading="lazy"
               className="w-full h-24 sm:h-28 object-cover rounded-md border"
