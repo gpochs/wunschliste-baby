@@ -21,8 +21,9 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(apiUrl.toString())
     if (!res.ok) return NextResponse.json({ error: 'Search failed' }, { status: 502 })
-    const data = await res.json() as any
-    const link: string | undefined = data?.items?.[0]?.link
+    const raw: unknown = await res.json()
+    const data = raw as { items?: Array<{ link?: string }> }
+    const link: string | undefined = data.items?.[0]?.link
     if (!link) return NextResponse.json({ error: 'No results' }, { status: 404 })
     return NextResponse.redirect(link, 302)
   } catch (e) {
