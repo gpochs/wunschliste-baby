@@ -164,14 +164,14 @@ export default function CityStroller2() {
 
     // Sicherstellen: Mindestens 12 sichtbare POI-Icons
     const ensurePoiIcons = () => {
-      const needed = 12
+      const needed = 16
       const current = Object.keys(poiMap).length
       if (current >= needed) return
       const fillerIcons = ['🏥','🏫','🏛️','🏦','🏪','🏬','⛪','🏨','🏢','🏘️','🖼️','🚒','🏟️','🛍️','🍽️']
       let idx = 0
       for (let y = 3; y < GRID_SIZE-3 && Object.keys(poiMap).length < needed; y+=2) {
         for (let x = 3; x < GRID_SIZE-3 && Object.keys(poiMap).length < needed; x+=2) {
-          if (m[y][x] === TileType.EMPTY) {
+          if (m[y][x] !== TileType.GOAL) {
             m[y][x] = TileType.WALL
             poiMap[`${x},${y}`] = fillerIcons[idx % fillerIcons.length]
             idx++
@@ -414,6 +414,7 @@ export default function CityStroller2() {
     const ny = stroller.y + dy
     if (nx<0||nx>=GRID_SIZE||ny<0||ny>=GRID_SIZE) return
     const nextTile = city[ny]?.[nx]
+    // Kollision auch bei POIs (WALL) und Deko/Tree
     if (nextTile===TileType.WALL || nextTile===TileType.TREE || nextTile===TileType.DECOR){ setGameStatus('fail'); return }
     setStroller({x:nx,y:ny})
     if (nextTile===TileType.GOAL) setGameStatus('win')
@@ -478,7 +479,14 @@ export default function CityStroller2() {
       cls='bg-neutral-400 border border-neutral-500'
     } else if (t===TileType.WALL){
       cls='bg-neutral-800 border border-neutral-900 shadow-inner'
-      content = poiIconByKeyRef.current[`${x},${y}`] ?? null
+      {
+        const poi = poiIconByKeyRef.current[`${x},${y}`]
+        content = poi ? (
+          <span className="text-[12px] md:text-[14px] leading-none text-white/95 drop-shadow-sm select-none">
+            {poi}
+          </span>
+        ) : null
+      }
     } else if (t===TileType.TREE){
       cls='bg-green-700 border border-green-800'
       content='🌳'
