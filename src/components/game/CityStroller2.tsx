@@ -401,6 +401,13 @@ export default function CityStroller2() {
         all.push({ type:'scooter', speedTilesPerSecond:2, path:p, t:Math.random()*p.length })
       }
     })
+
+    // Vier zusätzliche Fahrzeuge auf großen Loops (weitläufige Kreise)
+    const largeLoops = [loops[0], loops[1], loops[2], loops[3]].filter(p=>Array.isArray(p) && p.length>0)
+    if (largeLoops[0]) all.push({ type:'bus', speedTilesPerSecond:3, path:largeLoops[0], t:Math.random()*largeLoops[0].length })
+    if (largeLoops[1]) all.push({ type:'truck', speedTilesPerSecond:2, path:largeLoops[1], t:Math.random()*largeLoops[1].length })
+    if (largeLoops[2]) all.push({ type:'car', speedTilesPerSecond:4, path:largeLoops[2], t:Math.random()*largeLoops[2].length })
+    if (largeLoops[3]) all.push({ type:'police', speedTilesPerSecond:4, path:largeLoops[3], t:Math.random()*largeLoops[3].length })
     vehiclesRef.current = all
   },[buildLoops])
 
