@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Settings
 } from 'lucide-react'
+import { ENABLE_CITY_STYLING, CITY_STYLING } from '@/city/config'
 
 enum TileType {
   EMPTY = 'EMPTY',
@@ -19,7 +20,10 @@ enum TileType {
   WALL = 'WALL',
   TREE = 'TREE',
   GOAL = 'GOAL',
-  DECOR = 'DECOR'
+  DECOR = 'DECOR',
+  GRASS = 'GRASS',
+  FLOWERBED = 'FLOWERBED',
+  PARK_PATH = 'PARK_PATH'
 }
 
 interface GridPoint { x: number; y: number }
@@ -73,6 +77,9 @@ export default function CityStroller2() {
       m[i][0] = TileType.WALL
       m[i][GRID_SIZE - 1] = TileType.WALL
     }
+
+    const inBounds = (x:number,y:number)=> x>=0 && y>=0 && x<GRID_SIZE && y<GRID_SIZE
+    const randInt=(min:number,max:number)=> Math.floor(Math.random()*(max-min+1))+min
 
     // Enges orthogonales Straßennetz
     const rows = [2,4,6,8,10,12,14,16]
@@ -199,6 +206,63 @@ export default function CityStroller2() {
     })
     decorIconByKeyRef.current = decorMap
 
+    // Parks und Grünflächen
+    if (ENABLE_CITY_STYLING) {
+      const total = GRID_SIZE*GRID_SIZE
+      const targetGreens = Math.floor((CITY_STYLING.greenspacePercent/100) * total)
+      const smallParks = Math.max(0, Math.round((CITY_STYLING.smallParksPer100Tiles/100)*total))
+      const bigParks = Math.max(0, Math.round((CITY_STYLING.bigParksPer100Tiles/100)*total))
+
+      const placeGrass=(x:number,y:number)=>{
+        if (!inBounds(x,y)) return
+        if ([TileType.ROAD, TileType.GOAL, TileType.WALL].includes(m[y][x])) return
+        m[y][x] = TileType.GRASS
+      }
+      const placeFlower=(x:number,y:number)=>{
+        if (!inBounds(x,y)) return
+        if ([TileType.ROAD, TileType.GOAL, TileType.WALL].includes(m[y][x])) return
+        m[y][x] = TileType.FLOWERBED
+      }
+
+      // small parks (2x2)
+      for (let i=0;i<smallParks;i++){
+        const x = randInt(2, GRID_SIZE-4)
+        const y = randInt(2, GRID_SIZE-4)
+        const coords=[{x,y},{x:x+1,y},{x,y:y+1},{x:x+1,y:y+1}]
+        if (coords.every(p=>![TileType.GOAL,TileType.WALL].includes(m[p.y][p.x]))){
+          coords.forEach(p=>{ m[p.y][p.x]=TileType.GRASS })
+          // simple path cross
+          if (inBounds(x,y+1)) m[y+1][x]=TileType.PARK_PATH
+          if (inBounds(x+1,y)) m[y][x+1]=TileType.PARK_PATH
+        }
+      }
+
+      // big parks (3x3)
+      for (let i=0;i<bigParks;i++){
+        const x = randInt(2, GRID_SIZE-5)
+        const y = randInt(2, GRID_SIZE-5)
+        const coords: GridPoint[]=[]
+        for(let yy=y; yy<y+3; yy++) for(let xx=x; xx<x+3; xx++) coords.push({x:xx,y:yy})
+        if (coords.every(p=>![TileType.GOAL,TileType.WALL].includes(m[p.y][p.x]))){
+          coords.forEach(p=>{ m[p.y][p.x]=TileType.GRASS })
+          // ring path
+          for(let xx=x; xx<x+3; xx++){ m[y+1][xx]=TileType.PARK_PATH }
+          for(let yy=y; yy<y+3; yy++){ m[yy][x+1]=TileType.PARK_PATH }
+        }
+      }
+
+      // scatter singles
+      let greensPlaced = 0
+      while (greensPlaced < targetGreens){
+        const x = randInt(1, GRID_SIZE-2)
+        const y = randInt(1, GRID_SIZE-2)
+        if (![TileType.ROAD,TileType.GOAL,TileType.WALL].includes(m[y][x])){
+          if (Math.random()<0.2) placeFlower(x,y); else placeGrass(x,y)
+          greensPlaced++
+        }
+      }
+    }
+
     // Straßenringe um Points of Interest (POIs und Deko) anlegen, damit Fahrzeuge rundherum fahren können
     const carveRoadAround = (cx:number, cy:number) => {
       const neighbors: GridPoint[] = [
@@ -220,6 +284,13 @@ export default function CityStroller2() {
       const [sx,sy] = key.split(',').map(Number)
       carveRoadAround(sx, sy)
     })
+
+    // Alle verbleibenden leeren Tiles in GRASS verwandeln, um weiße Lücken zu vermeiden
+    for (let y=0;y<GRID_SIZE;y++){
+      for (let x=0;x<GRID_SIZE;x++){
+        if (m[y][x]===TileType.EMPTY) m[y][x]=TileType.GRASS
+      }
+    }
 
     // Zusätzliche Hindernisse nahe am Rand (ohne die Perimeterstraße zu blockieren)
     const edgeBand: GridPoint[] = [
@@ -428,10 +499,13 @@ export default function CityStroller2() {
 
     let cls=''
     let content: React.ReactNode=null
+    const isEdge = x===0 || x===GRID_SIZE-1 || y===0 || y===GRID_SIZE-1
     if (t===TileType.ROAD){
       cls='bg-neutral-400 border border-neutral-500'
     } else if (t===TileType.WALL){
-      cls='bg-white border border-neutral-300 shadow-sm'
+      cls = isEdge
+        ? 'bg-slate-200 border border-slate-300 shadow-inner'
+        : 'bg-white border border-neutral-300 shadow-sm'
       {
         const poi = poiIconByKeyRef.current[`${x},${y}`]
         content = poi ? (
@@ -443,6 +517,13 @@ export default function CityStroller2() {
     } else if (t===TileType.TREE){
       cls='bg-green-700 border border-green-800'
       content='🌳'
+    } else if (t===TileType.GRASS){
+      cls='bg-green-500/40 border border-green-600/60'
+    } else if (t===TileType.FLOWERBED){
+      cls='bg-green-600/50 border border-green-700'
+      content='🌼'
+    } else if (t===TileType.PARK_PATH){
+      cls='bg-amber-100 border border-amber-300'
     } else if (t===TileType.GOAL){
       cls='bg-amber-300 border border-amber-500 shadow-lg'
       content=(
@@ -458,15 +539,46 @@ export default function CityStroller2() {
       cls='bg-neutral-100 border border-neutral-200'
     }
 
+    // Kreuzungsmarkierung dezent
+    if (t===TileType.ROAD){
+      const up = (city[y-1]?.[x] as TileType) === TileType.ROAD
+      const down = (city[y+1]?.[x] as TileType) === TileType.ROAD
+      const left = (city[y]?.[x-1] as TileType) === TileType.ROAD
+      const right = (city[y]?.[x+1] as TileType) === TileType.ROAD
+      const isIntersection = up && down && left && right
+      const bg = isIntersection
+        ? 'repeating-linear-gradient(0deg, rgba(255,255,255,0.12) 0, rgba(255,255,255,0.12) 2px, transparent 2px, transparent 8px), repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0, rgba(255,255,255,0.08) 3px, transparent 3px, transparent 10px)'
+        : 'repeating-linear-gradient(0deg, rgba(255,255,255,0.12) 0, rgba(255,255,255,0.12) 2px, transparent 2px, transparent 8px)'
+      return (
+        <div key={`${x}-${y}`}
+          className={`${cls} flex items-center justify-center text-xs ${isStroller?'ring-4 ring-blue-500 ring-opacity-75':''}`}
+          style={{
+            width: tileSize, height: tileSize, minWidth: tileSize, minHeight: tileSize,
+            backgroundImage: bg,
+            backgroundSize: '2px 100%, 100% 100%',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'repeat-x, repeat',
+          }}
+          aria-label={`Tile ${x},${y}`}
+        >
+          {isStroller ? (
+            <svg aria-label="Kinderwagen" viewBox="0 0 24 24" width={Math.round(tileSize*0.8)} height={Math.round(tileSize*0.8)}>
+              <circle cx="7" cy="19" r="2" fill="#1e3a8a" />
+              <circle cx="17" cy="19" r="2" fill="#1e3a8a" />
+              <rect x="6" y="11" width="10" height="4" rx="2" fill="#3b82f6" />
+              <path d="M6 11 Q10 3 18 8" fill="#60a5fa" />
+            </svg>
+          ) : content}
+        </div>
+      )
+    }
+
     return (
       <div key={`${x}-${y}`}
         className={`${cls} flex items-center justify-center text-xs ${isStroller?'ring-4 ring-blue-500 ring-opacity-75':''}`}
         style={{
           width: tileSize, height: tileSize, minWidth: tileSize, minHeight: tileSize,
-          backgroundImage: t===TileType.ROAD ? 'repeating-linear-gradient(0deg, rgba(255,255,255,0.12) 0, rgba(255,255,255,0.12) 2px, transparent 2px, transparent 8px)' : undefined,
-          backgroundSize: t===TileType.ROAD ? '2px 100%' : undefined,
-          backgroundPosition: t===TileType.ROAD ? 'center' : undefined,
-          backgroundRepeat: t===TileType.ROAD ? 'repeat-x' : undefined,
+          // non-road tiles: no road texture
         }}
         aria-label={`Tile ${x},${y}`}
       >
@@ -509,7 +621,7 @@ export default function CityStroller2() {
 
   const canSave = playerName.trim().length>0
   return (
-    <div className="relative pb-28 sm:pb-0">
+    <div className="relative pb-28 sm:pb-0 bg-slate-50">
       <div className="bg-gradient-to-r from-indigo-50 to-violet-50 p-4 border-b border-indigo-200">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold text-indigo-800">City Stroller</h3>
@@ -529,8 +641,8 @@ export default function CityStroller2() {
         {renderLegend()}
       </div>
 
-      <div className="relative bg-white p-4" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        <div className="grid gap-0 mx-auto border-2 border-gray-300 rounded-lg overflow-hidden"
+      <div className="relative bg-white p-6" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div className="grid gap-0 mx-auto border-2 border-slate-300 rounded-2xl overflow-hidden shadow-xl ring-1 ring-slate-200"
           style={{
             gridTemplateColumns:`repeat(${GRID_SIZE}, ${tileSize}px)`,
             gridTemplateRows:`repeat(${GRID_SIZE}, ${tileSize}px)`,
