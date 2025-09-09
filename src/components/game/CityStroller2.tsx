@@ -125,35 +125,36 @@ export default function CityStroller2() {
       if (m[y][right] !== TileType.GOAL) m[y][right] = TileType.ROAD
     }
 
-    // Dichte POI Blöcke (keine Randkacheln) — Ziel: mindestens 15 POIs
+    // Dichte POI Blöcke (keine Randkacheln) — Ziel: genau 16 verschiedene POIs inkl. KiTa (2x2)
     const blocks: Array<{ x:number; y:number; w:number; h:number; icon:string; label?:string }>= [
-      // 1 Schule, 2 Mall, 3 Spital, 4 Stadion, 5 Rathaus, 6 Wohnblock, 7 Hochhaus, 8 Kirche,
-      { x:5, y:4, w:2, h:2, icon:'🏫' },
-      { x:12, y:4, w:3, h:3, icon:'🏬' },
-      { x:10, y:12, w:3, h:2, icon:'🏥' },
-      { x:6, y:12, w:4, h:3, icon:'🏟️' },
-      { x:4, y:6, w:2, h:2, icon:'🏛️' },
-      { x:5, y:8, w:2, h:2, icon:'🏘️' },
-      { x:15, y:6, w:2, h:2, icon:'🏢' },
-      { x:7, y:9, w:2, h:2, icon:'⛪' },
-      // 9 Feuerwehr, 10 Museum, 11 Hotel, 12 Bank, 13 Einkaufszeile, 14 Restaurant, 15 Skyline
-      { x:7, y:14, w:2, h:2, icon:'🚒' },
-      { x:12, y:13, w:2, h:2, icon:'🖼️' },
-      { x:11, y:14, w:3, h:2, icon:'🏨' },
-      { x:15, y:14, w:2, h:2, icon:'🏦' },
-      { x:14, y:10, w:2, h:2, icon:'🛍️' },
-      { x:8, y:6, w:2, h:2, icon:'🍽️' },
-      { x:13, y:9, w:2, h:2, icon:'🏙️' },
-      // 16 KiTa (2x2) mit Label
+      // KiTa (2x2) mit Label
       { x:9, y:4, w:2, h:2, icon:'🧒', label:'KiTa' },
+    ]
+    const anchorPois: Array<{ x:number; y:number; icon:string }> = [
+      { x:3,  y:3,  icon:'🏫' }, // Schule
+      { x:15, y:3,  icon:'🏥' }, // Spital
+      { x:4,  y:6,  icon:'🏛️' }, // Rathaus/Museum
+      { x:15, y:6,  icon:'🏦' }, // Bank
+      { x:12, y:4,  icon:'🏬' }, // Einkaufszentrum
+      { x:7,  y:9,  icon:'⛪' }, // Kirche
+      { x:11, y:14, icon:'🏨' }, // Hotel
+      { x:15, y:14, icon:'🏢' }, // Büro
+      { x:5,  y:8,  icon:'🏘️' }, // Wohnblock
+      { x:6,  y:12, icon:'🏟️' }, // Stadion
+      { x:14, y:10, icon:'🛍️' }, // Shopping
+      { x:8,  y:6,  icon:'🍽️' }, // Restaurant
+      { x:12, y:13, icon:'🖼️' }, // Museum
+      { x:7,  y:14, icon:'🚒' }, // Feuerwehr
+      { x:13, y:9,  icon:'🏙️' }, // Skyline
     ]
     const poiMap: Record<string,string> = {}
     const poiAnchors = new Set<string>()
+
+    // KiTa-Block (2x2) anlegen
     blocks.forEach(b=>{
       for(let yy=b.y; yy<b.y+b.h; yy++){
         for(let xx=b.x; xx<b.x+b.w; xx++){
           if (m[yy] && m[yy][xx] !== TileType.GOAL) m[yy][xx]=TileType.WALL
-          // Für KiTa einmalig mit Label beschriften (oben links)
           if (b.label && xx===b.x && yy===b.y) {
             poiMap[`${xx},${yy}`]=`${b.icon} ${b.label}`
             poiAnchors.add(`${xx},${yy}`)
@@ -162,78 +163,20 @@ export default function CityStroller2() {
           }
         }
       }
-      // Anker für jeden POI-Block (oben links)
       poiAnchors.add(`${b.x},${b.y}`)
     })
 
-    // Sicherstellen: Mindestens 16 sichtbare POI-Anker
-    const ensurePoiIcons = () => {
-      const needed = 16
-      const current = poiAnchors.size
-      if (current >= needed) return
-      const fillerIcons = ['🏥','🏫','🏛️','🏦','🏪','🏬','⛪','🏨','🏢','🏘️','🖼️','🚒','🏟️','🛍️','🍽️']
-      let idx = 0
-      for (let y = 3; y < GRID_SIZE-3 && poiAnchors.size < needed; y+=1) {
-        for (let x = 3; x < GRID_SIZE-3 && poiAnchors.size < needed; x+=1) {
-          const key = `${x},${y}`
-          if (m[y][x] !== TileType.GOAL && !poiAnchors.has(key)) {
-            m[y][x] = TileType.WALL
-            poiMap[key] = fillerIcons[idx % fillerIcons.length]
-            poiAnchors.add(key)
-            idx++
-          }
-        }
-      }
-    }
-    ensurePoiIcons()
-    poiIconByKeyRef.current = poiMap
-
-    // POIs direkt am inneren Spielrand (an die Perimeterstraße angrenzend)
-    const edgePois: Array<{x:number;y:number;icon:string}> = [
-      {x:2,y:4,icon:'🏥'},{x:GRID_SIZE-3,y:5,icon:'🏫'},
-      {x:4,y:2,icon:'🏛️'},{x:5,y:GRID_SIZE-3,icon:'🏪'},
-      {x:GRID_SIZE-3,y:GRID_SIZE-5,icon:'🏬'},{x:GRID_SIZE-5,y:2,icon:'⛪'},
-      {x:2,y:GRID_SIZE-4,icon:'🚏'},{x:GRID_SIZE-4,y:2,icon:'🗽'},
-      {x:GRID_SIZE-3,y:3,icon:'🏨'},{x:3,y:GRID_SIZE-3,icon:'🏦'}
-    ]
-    edgePois.forEach(p=>{
-      if (m[p.y][p.x]===TileType.EMPTY){
-        m[p.y][p.x]=TileType.WALL
-        poiMap[`${p.x},${p.y}`]=p.icon
+    // 15 weitere 1x1-POIs (alle verschieden)
+    anchorPois.forEach(p=>{
+      if (m[p.y][p.x] !== TileType.GOAL) {
+        m[p.y][p.x] = TileType.WALL
+        poiMap[`${p.x},${p.y}`] = p.icon
         poiAnchors.add(`${p.x},${p.y}`)
       }
     })
 
-    // Gleichmäßig verteilte Rand-POIs & Innen-POIs: Stadtbild (Bahnhof, Museum, Park, Café, Schule, Spital, Wolkenkratzer)
-    const beltIcons = ['🏥','🏫','🏛️','🏦','🏪','🏬','⛪','🏨']
-    let bi = 0
-    // senkrechte Bänder links/rechts
-    for (let y = 3; y <= GRID_SIZE - 4; y += 2) {
-      for (const x of [3, GRID_SIZE - 4]) {
-        // nicht Start-/Ziel-Kacheln überschreiben
-        const inGoal = (x === GOAL.x || x === GOAL.x + 1) && (y === GOAL.y || y === GOAL.y + 1)
-        const isStart = x === START.x && y === START.y
-        if (!inGoal && !isStart && m[y][x] === TileType.EMPTY) {
-          m[y][x] = TileType.WALL
-          poiMap[`${x},${y}`] = beltIcons[bi % beltIcons.length]
-          poiAnchors.add(`${x},${y}`)
-          bi++
-        }
-      }
-    }
-    // waagerechte Bänder oben/unten
-    for (let x = 3; x <= GRID_SIZE - 4; x += 2) {
-      for (const y of [3, GRID_SIZE - 4]) {
-        const inGoal = (x === GOAL.x || x === GOAL.x + 1) && (y === GOAL.y || y === GOAL.y + 1)
-        const isStart = x === START.x && y === START.y
-        if (!inGoal && !isStart && m[y][x] === TileType.EMPTY) {
-          m[y][x] = TileType.WALL
-          poiMap[`${x},${y}`] = beltIcons[bi % beltIcons.length]
-          poiAnchors.add(`${x},${y}`)
-          bi++
-        }
-      }
-    }
+    // POI-Icons übernehmen
+    poiIconByKeyRef.current = poiMap
 
     // Wälder (Cluster) / Parks
     const forests = [ [ {x:16,y:6},{x:16,y:7},{x:15,y:7} ], [ {x:7,y:15},{x:8,y:15},{x:7,y:14} ], [ {x:12,y:3},{x:13,y:3},{x:12,y:4} ] ]
@@ -487,11 +430,11 @@ export default function CityStroller2() {
     if (t===TileType.ROAD){
       cls='bg-neutral-400 border border-neutral-500'
     } else if (t===TileType.WALL){
-      cls='bg-neutral-800 border border-neutral-900 shadow-inner'
+      cls='bg-white border border-neutral-300 shadow-sm'
       {
         const poi = poiIconByKeyRef.current[`${x},${y}`]
         content = poi ? (
-          <span className="text-[12px] md:text-[14px] leading-none text-white/95 drop-shadow-sm select-none">
+          <span className="text-[13px] md:text-[16px] leading-none text-gray-800 drop-shadow-sm select-none">
             {poi}
           </span>
         ) : null
