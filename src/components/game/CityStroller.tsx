@@ -539,9 +539,10 @@ export default function CityStroller() {
     let bc: BroadcastChannel | null = null
     try {
       bc = new BroadcastChannel('leaderboard')
-      bc.onmessage = (ev) => {
-        const data = (ev as any)?.data ?? ev
-        if (data && typeof data === 'object' && (data as any).type === 'cleared') {
+      type LeaderboardMessage = { type: 'cleared' }
+      bc.onmessage = (ev: MessageEvent<LeaderboardMessage>) => {
+        const data = ev.data
+        if (data && data.type === 'cleared') {
           setLeaderboard([])
         }
       }
