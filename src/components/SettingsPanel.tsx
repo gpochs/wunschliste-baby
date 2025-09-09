@@ -29,16 +29,24 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
 
   useEffect(() => {
     loadSettings()
-    // Rangliste laden (Client only)
-    try {
-      const raw = localStorage.getItem('cityStrollerLeaderboard')
-      if (raw) {
-        const parsed = JSON.parse(raw) as Array<unknown>
-        setLeaderboardCount(Array.isArray(parsed) ? parsed.length : 0)
-      }
-    } catch {
-      setLeaderboardCount(0)
-    }
+    ;(async () => {
+      try{
+        const res = await fetch('/api/leaderboard', { cache:'no-store' })
+        if (res.ok){
+          const json = await res.json() as { entries: unknown[] }
+          setLeaderboardCount(Array.isArray(json.entries) ? json.entries.length : 0)
+          return
+        }
+      } catch {}
+      // fallback local
+      try {
+        const raw = localStorage.getItem('cityStrollerLeaderboard')
+        if (raw) {
+          const parsed = JSON.parse(raw) as Array<unknown>
+          setLeaderboardCount(Array.isArray(parsed) ? parsed.length : 0)
+        } else setLeaderboardCount(0)
+      } catch { setLeaderboardCount(0) }
+    })()
   }, [])
 
   const loadSettings = async () => {

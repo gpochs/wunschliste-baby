@@ -116,4 +116,21 @@ DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname='insert_leaderboard') THEN
     CREATE POLICY insert_leaderboard ON leaderboard FOR INSERT WITH CHECK (true);
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname='delete_leaderboard') THEN
+    CREATE POLICY delete_leaderboard ON leaderboard FOR DELETE USING (true);
+  END IF;
 END $$;
+
+-- SECURITY DEFINER helper to clear leaderboard regardless of RLS
+DO $$ BEGIN
+  CREATE OR REPLACE FUNCTION leaderboard_clear()
+  RETURNS void
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+AS $$
+BEGIN
+  DELETE FROM public.leaderboard;
+END;
+$$;
+  GRANT EXECUTE ON FUNCTION leaderboard_clear() TO anon;
+EXCEPTION WHEN others THEN NULL; END $$;

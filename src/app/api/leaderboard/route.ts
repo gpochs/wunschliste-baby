@@ -25,11 +25,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  // delete all leaderboard entries
-  const { error } = await supabase
-    .from('leaderboard')
-    .delete()
-    .gt('time_seconds', -1)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  // use security definer helper function if available
+  const rpc = await supabase.rpc('leaderboard_clear')
+  if (rpc.error) {
+    // fallback: client-side delete with policy
+    const del = await supabase.from('leaderboard').delete().gt('time_seconds', -1)
+    if (del.error) return NextResponse.json({ error: del.error.message }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }
