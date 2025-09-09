@@ -27,7 +27,6 @@ export const CITY_ICONS: Record<CityIconId, CityIcon> = {
 export function CityIcon({ id, className }: { id: CityIconId; className?: string }){
   const icon = CITY_ICONS[id]
   const sizeClass = className ?? 'text-[14px] md:text-[18px]'
-  // If we had /public/icons/*.svg we could load by src, fallback to emoji
   return (
     <span className={`${sizeClass}`} aria-label={icon.label} role="img">
       {icon.emojiFallback}
