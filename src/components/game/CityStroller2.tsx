@@ -503,13 +503,14 @@ export default function CityStroller2() {
     if (t===TileType.ROAD){
       cls='bg-neutral-400 border border-neutral-500'
     } else if (t===TileType.WALL){
+      // deutlich abheben (blockierend)
       cls = isEdge
-        ? 'bg-slate-200 border border-slate-300 shadow-inner'
-        : 'bg-white border border-neutral-300 shadow-sm'
+        ? 'bg-slate-800 border border-black shadow-inner'
+        : 'bg-slate-900 text-white border border-black shadow-lg'
       {
         const poi = poiIconByKeyRef.current[`${x},${y}`]
         content = poi ? (
-          <span className="text-[14px] md:text-[18px] leading-none text-gray-800 drop-shadow-sm select-none font-semibold">
+          <span className="text-[14px] md:text-[18px] leading-none text-white drop-shadow-sm select-none font-semibold">
             {poi}
           </span>
         ) : null
@@ -533,7 +534,8 @@ export default function CityStroller2() {
         </div>
       )
     } else if (t===TileType.DECOR){
-      cls='bg-blue-200 border border-blue-300'
+      // deutlich blockierend unterscheiden
+      cls='bg-blue-600/70 border border-blue-900 text-white'
       content=decorIconByKeyRef.current[`${x},${y}`] ?? '🚦'
     } else {
       cls='bg-neutral-100 border border-neutral-200'
@@ -568,6 +570,20 @@ export default function CityStroller2() {
               <rect x="6" y="11" width="10" height="4" rx="2" fill="#3b82f6" />
               <path d="M6 11 Q10 3 18 8" fill="#60a5fa" />
             </svg>
+          ) : vHere ? (
+            (()=>{
+              const v = vehiclesRef.current.find(v=>{ const p=v.path[Math.floor(v.t)]; return p&&p.x===x&&p.y===y })
+              const icon = v?.type==='truck' ? '🚚'
+                : v?.type==='ambulance' ? '🚑'
+                : v?.type==='bus' ? '🚌'
+                : v?.type==='taxi' ? '🚕'
+                : v?.type==='police' ? '🚓'
+                : v?.type==='moto' ? '🏍️'
+                : v?.type==='scooter' ? '🛴'
+                : v?.type==='bike' ? '🚲'
+                : '🚗'
+              return <div className="text-sm" aria-label="Fahrzeug">{icon}</div>
+            })()
           ) : content}
         </div>
       )
