@@ -536,6 +536,33 @@ export default function CityStroller() {
       }
     }
     window.addEventListener('storage', onStorage)
+    const onCustom = () => { setLeaderboard([]); try{ localStorage.removeItem('cityStrollerLeaderboard') }catch{} }
+    window.addEventListener('leaderboard:cleared' as any, onCustom as EventListener)
+    const refetch = async () => {
+      try{
+        const res = await fetch('/api/leaderboard', { cache:'no-store' })
+        if (res.ok){
+          const json = await res.json() as { entries: { name:string; time_seconds:number; date_iso:string }[] }
+          setLeaderboard(json.entries.map(e=>({ name:e.name, timeSeconds:e.time_seconds, dateIso:e.date_iso })))
+          return
+        }
+      } catch {}
+      try{ const raw=localStorage.getItem('cityStrollerLeaderboard'); setLeaderboard(raw?JSON.parse(raw):[]) }catch{ setLeaderboard([]) }
+    }
+    window.addEventListener('focus', refetch)
+    const onVisibility = () => { if (document.visibilityState==='visible') refetch() }
+    document.addEventListener('visibilitychange', onVisibility)
+    const lastClearedAt = { v: typeof window !== 'undefined' ? (localStorage.getItem('leaderboard:clearedAt') || '') : '' }
+    const interval = window.setInterval(()=>{
+      try {
+        const current = localStorage.getItem('leaderboard:clearedAt') || ''
+        if (current && current !== lastClearedAt.v) {
+          lastClearedAt.v = current
+          setLeaderboard([])
+          try{ localStorage.removeItem('cityStrollerLeaderboard') }catch{}
+        }
+      } catch {}
+    },1500)
     let bc: BroadcastChannel | null = null
     try {
       bc = new BroadcastChannel('leaderboard')
@@ -549,6 +576,10 @@ export default function CityStroller() {
     } catch {}
     return () => {
       window.removeEventListener('storage', onStorage)
+      window.removeEventListener('leaderboard:cleared' as any, onCustom as EventListener)
+      window.removeEventListener('focus', refetch)
+      document.removeEventListener('visibilitychange', onVisibility)
+      try { window.clearInterval(interval) } catch {}
       try { bc?.close() } catch {}
     }
   }, [])

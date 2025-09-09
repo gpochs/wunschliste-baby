@@ -133,6 +133,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
           bc.postMessage({ type: 'cleared' })
           bc.close()
         } catch {}
+        try { window.dispatchEvent(new CustomEvent('leaderboard:cleared')) } catch {}
         setLeaderboardCount(0)
         toast.success('🏁 Rangliste erfolgreich gelöscht – für alle!')
       } catch (error) {
