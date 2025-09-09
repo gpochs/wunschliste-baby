@@ -126,6 +126,13 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
         if (!res.ok) throw new Error('Failed to delete leaderboard')
         // client fallback löschen
         try { localStorage.removeItem('cityStrollerLeaderboard') } catch {}
+        // notify other views (same tab and other tabs)
+        try { localStorage.setItem('leaderboard:clearedAt', new Date().toISOString()) } catch {}
+        try {
+          const bc = new BroadcastChannel('leaderboard')
+          bc.postMessage({ type: 'cleared' })
+          bc.close()
+        } catch {}
         setLeaderboardCount(0)
         toast.success('🏁 Rangliste erfolgreich gelöscht – für alle!')
       } catch (error) {

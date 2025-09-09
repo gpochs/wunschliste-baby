@@ -438,6 +438,29 @@ export default function CityStroller2() {
       try{ const raw=localStorage.getItem('cityStrollerLeaderboard'); if(raw) setLeaderboard(JSON.parse(raw)) }catch{}
     }
     fetchLb()
+    // react to clears from settings (cross-tab and same-tab)
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'leaderboard:clearedAt') {
+        setLeaderboard([])
+        try{ localStorage.removeItem('cityStrollerLeaderboard') }catch{}
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    let bc: BroadcastChannel | null = null
+    try {
+      bc = new BroadcastChannel('leaderboard')
+      bc.onmessage = (msg) => {
+        if (msg && typeof msg === 'object' && (msg as any).data?.type === 'cleared') {
+          setLeaderboard([])
+        } else if ((msg as any)?.type === 'cleared') {
+          setLeaderboard([])
+        }
+      }
+    } catch {}
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      try { bc?.close() } catch {}
+    }
   },[])
   const saveLeaderboard=(entries: typeof leaderboard)=>{
     setLeaderboard(entries)

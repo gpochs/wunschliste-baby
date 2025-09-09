@@ -527,6 +527,31 @@ export default function CityStroller() {
     load()
   }, [])
 
+  // Reagiere auf Ranglisten-Löschung (Settings) – Cross-Tab und same-tab
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'leaderboard:clearedAt') {
+        setLeaderboard([])
+        try { localStorage.removeItem('cityStrollerLeaderboard') } catch {}
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    let bc: BroadcastChannel | null = null
+    try {
+      bc = new BroadcastChannel('leaderboard')
+      bc.onmessage = (ev) => {
+        const data = (ev as any)?.data ?? ev
+        if (data && typeof data === 'object' && (data as any).type === 'cleared') {
+          setLeaderboard([])
+        }
+      }
+    } catch {}
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      try { bc?.close() } catch {}
+    }
+  }, [])
+
   const saveLeaderboard = (entries: LeaderboardEntry[]) => {
     setLeaderboard(entries)
     try {
