@@ -13,6 +13,12 @@ import {
   Settings
 } from 'lucide-react'
 
+declare global {
+  interface WindowEventMap {
+    'leaderboard:cleared': CustomEvent<void>
+  }
+}
+
 // Tile-Typen
 enum TileType {
   EMPTY = 'EMPTY',
@@ -537,7 +543,7 @@ export default function CityStroller() {
     }
     window.addEventListener('storage', onStorage)
     const onCustom = () => { setLeaderboard([]); try{ localStorage.removeItem('cityStrollerLeaderboard') }catch{} }
-    window.addEventListener('leaderboard:cleared' as any, onCustom as EventListener)
+    window.addEventListener('leaderboard:cleared', onCustom)
     const refetch = async () => {
       try{
         const res = await fetch('/api/leaderboard', { cache:'no-store' })
@@ -576,7 +582,7 @@ export default function CityStroller() {
     } catch {}
     return () => {
       window.removeEventListener('storage', onStorage)
-      window.removeEventListener('leaderboard:cleared' as any, onCustom as EventListener)
+      window.removeEventListener('leaderboard:cleared', onCustom)
       window.removeEventListener('focus', refetch)
       document.removeEventListener('visibilitychange', onVisibility)
       try { window.clearInterval(interval) } catch {}
