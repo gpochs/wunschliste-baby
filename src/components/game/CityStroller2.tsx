@@ -784,7 +784,7 @@ export default function CityStroller2() {
       </div>
 
       {/* Mobile: Floating Rangliste Button + Dialog */}
-      <div className="fixed right-4 bottom-24 sm:hidden z-30">
+      <div className="fixed right-2 bottom-28 sm:hidden z-30" style={{ marginRight: 'max(0.5rem, env(safe-area-inset-right))' }}>
         <Button onClick={()=>setShowLeaderboardDialog(true)} className="bg-violet-600 hover:bg-violet-700 text-white shadow-lg">
           <Trophy className="h-4 w-4 mr-2" /> Rangliste
         </Button>
