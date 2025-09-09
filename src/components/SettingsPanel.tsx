@@ -29,24 +29,32 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
 
   useEffect(() => {
     loadSettings()
-    ;(async () => {
-      try{
-        const res = await fetch('/api/leaderboard', { cache:'no-store' })
-        if (res.ok){
-          const json = await res.json() as { entries: unknown[] }
-          setLeaderboardCount(Array.isArray(json.entries) ? json.entries.length : 0)
-          return
-        }
-      } catch {}
-      // fallback local
+    const readLocalCount = () => {
       try {
         const raw = localStorage.getItem('cityStrollerLeaderboard')
-        if (raw) {
-          const parsed = JSON.parse(raw) as Array<unknown>
-          setLeaderboardCount(Array.isArray(parsed) ? parsed.length : 0)
-        } else setLeaderboardCount(0)
+        if (!raw) { setLeaderboardCount(0); return }
+        const parsed = JSON.parse(raw)
+        setLeaderboardCount(Array.isArray(parsed) ? parsed.length : 0)
       } catch { setLeaderboardCount(0) }
-    })()
+    }
+    readLocalCount()
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'cityStrollerLeaderboard' || e.key === 'leaderboard:clearedAt') readLocalCount()
+    }
+    window.addEventListener('storage', onStorage)
+    const onCustom = () => { setLeaderboardCount(0) }
+    window.addEventListener('leaderboard:cleared', onCustom as EventListener)
+    let bc: BroadcastChannel | null = null
+    try {
+      bc = new BroadcastChannel('leaderboard')
+      type LeaderboardMessage = { type: 'cleared' }
+      bc.onmessage = (ev: MessageEvent<LeaderboardMessage>) => { if (ev.data?.type === 'cleared') setLeaderboardCount(0) }
+    } catch {}
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('leaderboard:cleared', onCustom as EventListener)
+      try { bc?.close() } catch {}
+    }
   }, [])
 
   const loadSettings = async () => {
@@ -118,29 +126,14 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
   }
 
   const handleClearLeaderboard = () => {
-    const confirmed = confirm('Möchtest du die Spiel-Rangliste für alle Geräte wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')
+    const confirmed = confirm('Möchtest du die Spiel-Rangliste auf diesem Gerät wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')
     if (!confirmed) return
-    ;(async () => {
-      try {
-        const res = await fetch('/api/leaderboard', { method: 'DELETE' })
-        if (!res.ok) throw new Error('Failed to delete leaderboard')
-        // client fallback löschen
-        try { localStorage.removeItem('cityStrollerLeaderboard') } catch {}
-        // notify other views (same tab and other tabs)
-        try { localStorage.setItem('leaderboard:clearedAt', new Date().toISOString()) } catch {}
-        try {
-          const bc = new BroadcastChannel('leaderboard')
-          bc.postMessage({ type: 'cleared' })
-          bc.close()
-        } catch {}
-        try { window.dispatchEvent(new CustomEvent('leaderboard:cleared')) } catch {}
-        setLeaderboardCount(0)
-        toast.success('🏁 Rangliste erfolgreich gelöscht – für alle!')
-      } catch (error) {
-        console.error('Error clearing leaderboard:', error)
-        toast.error('Ups! Rangliste konnte nicht gelöscht werden.')
-      }
-    })()
+    try { localStorage.removeItem('cityStrollerLeaderboard') } catch {}
+    try { localStorage.setItem('leaderboard:clearedAt', new Date().toISOString()) } catch {}
+    try { const bc = new BroadcastChannel('leaderboard'); bc.postMessage({ type: 'cleared' }); bc.close() } catch {}
+    try { window.dispatchEvent(new CustomEvent('leaderboard:cleared')) } catch {}
+    setLeaderboardCount(0)
+    toast.success('🏁 Rangliste auf diesem Gerät gelöscht!')
   }
 
   return (

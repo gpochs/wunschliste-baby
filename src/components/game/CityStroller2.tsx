@@ -431,19 +431,11 @@ export default function CityStroller2() {
 
   // Leaderboard
   useEffect(()=>{
-    const fetchLb = async () => {
-      try {
-        const res = await fetch('/api/leaderboard', { cache: 'no-store' })
-        if (res.ok) {
-          const json = await res.json() as { entries: { name:string; time_seconds:number; date_iso:string }[] }
-          setLeaderboard(json.entries.map(e=>({ name:e.name, timeSeconds:e.time_seconds, dateIso:e.date_iso })))
-          return
-        }
-      } catch {}
-      // fallback local
-      try{ const raw=localStorage.getItem('cityStrollerLeaderboard'); if(raw) setLeaderboard(JSON.parse(raw)) }catch{}
-    }
-    fetchLb()
+    // load only from local storage
+    try {
+      const raw = localStorage.getItem('cityStrollerLeaderboard')
+      setLeaderboard(raw ? JSON.parse(raw) : [])
+    } catch { setLeaderboard([]) }
     // react to clears from settings (cross-tab and same-tab)
     const onStorage = (e: StorageEvent) => {
       if (e.key === 'leaderboard:clearedAt') {
@@ -454,17 +446,7 @@ export default function CityStroller2() {
     window.addEventListener('storage', onStorage)
     const onCustom = () => { setLeaderboard([]); try{ localStorage.removeItem('cityStrollerLeaderboard') }catch{} }
     window.addEventListener('leaderboard:cleared', onCustom)
-    const refetch = async () => {
-      try {
-        const res = await fetch('/api/leaderboard', { cache: 'no-store' })
-        if (res.ok) {
-          const json = await res.json() as { entries: { name:string; time_seconds:number; date_iso:string }[] }
-          setLeaderboard(json.entries.map(e=>({ name:e.name, timeSeconds:e.time_seconds, dateIso:e.date_iso })))
-          return
-        }
-      } catch {}
-      try{ const raw=localStorage.getItem('cityStrollerLeaderboard'); setLeaderboard(raw?JSON.parse(raw):[]) }catch{ setLeaderboard([]) }
-    }
+    const refetch = () => { try{ const raw=localStorage.getItem('cityStrollerLeaderboard'); setLeaderboard(raw?JSON.parse(raw):[]) }catch{ setLeaderboard([]) } }
     window.addEventListener('focus', refetch)
     const onVisibility = () => { if (document.visibilityState === 'visible') refetch() }
     document.addEventListener('visibilitychange', onVisibility)
@@ -483,11 +465,13 @@ export default function CityStroller2() {
     let bc: BroadcastChannel | null = null
     try {
       bc = new BroadcastChannel('leaderboard')
-      type LeaderboardMessage = { type: 'cleared' }
+      type LeaderboardMessage = { type: 'cleared' } | { type: 'saved'; entries: typeof leaderboard }
       bc.onmessage = (ev: MessageEvent<LeaderboardMessage>) => {
         const data = ev.data
         if (data && data.type === 'cleared') {
           setLeaderboard([])
+        } else if (data && data.type === 'saved') {
+          setLeaderboard(data.entries)
         }
       }
     } catch {}
@@ -503,6 +487,7 @@ export default function CityStroller2() {
   const saveLeaderboard=(entries: typeof leaderboard)=>{
     setLeaderboard(entries)
     try{ localStorage.setItem('cityStrollerLeaderboard', JSON.stringify(entries)) }catch{}
+    try { const bc = new BroadcastChannel('leaderboard'); bc.postMessage({ type:'saved', entries }); bc.close() } catch {}
   }
   const handleSaveScore = () => {
     const name = playerName.trim()
@@ -510,28 +495,9 @@ export default function CityStroller2() {
     try {
       setSaveState('saving')
       const nowIso = new Date().toISOString()
-      fetch('/api/leaderboard', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, timeSeconds: elapsedSeconds }) })
-        .catch(()=>null)
-        .finally(async ()=>{
-          try{
-            const res = await fetch('/api/leaderboard', { cache:'no-store' })
-            if (res.ok){
-              const json = await res.json() as { entries: { name:string; time_seconds:number; date_iso:string }[] }
-              const entries = json.entries.map(e=>({ name:e.name, timeSeconds:e.time_seconds, dateIso:e.date_iso }))
-              setLeaderboard(entries)
-              // also cache locally
-              saveLeaderboard(entries)
-            } else {
-              const next=[...leaderboard,{name,timeSeconds:elapsedSeconds,dateIso:nowIso}].sort((a,b)=>a.timeSeconds-b.timeSeconds).slice(0,10)
-              saveLeaderboard(next)
-            }
-            setSaveState('done')
-          } catch {
-            const next=[...leaderboard,{name,timeSeconds:elapsedSeconds,dateIso:nowIso}].sort((a,b)=>a.timeSeconds-b.timeSeconds).slice(0,10)
-            saveLeaderboard(next)
-            setSaveState('done')
-          }
-        })
+      const next=[...leaderboard,{name,timeSeconds:elapsedSeconds,dateIso:nowIso}].sort((a,b)=>a.timeSeconds-b.timeSeconds).slice(0,10)
+      saveLeaderboard(next)
+      setSaveState('done')
     } catch {
       setSaveState('error')
     }
@@ -852,7 +818,7 @@ export default function CityStroller2() {
       </div>
 
       {/* Mobile: Floating Rangliste Button + Dialog */}
-      <div className="fixed right-2 bottom-28 sm:hidden z-30" style={{ marginRight: 'max(0.5rem, env(safe-area-inset-right))' }}>
+      <div className="fixed right-2 bottom-32 sm:hidden z-30" style={{ marginRight: 'max(0.5rem, env(safe-area-inset-right))' }}>
         <Button onClick={()=>setShowLeaderboardDialog(true)} className="bg-violet-600 hover:bg-violet-700 text-white shadow-lg">
           <Trophy className="h-4 w-4 mr-2" /> Rangliste
         </Button>
