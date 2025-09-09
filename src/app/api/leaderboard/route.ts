@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 export async function GET() {
   const { data, error } = await supabase
@@ -25,10 +26,22 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE() {
-  // use security definer helper function if available
+  // Prefer server-side privileged delete using service role (robust across RLS/policies)
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (url && serviceKey) {
+    try {
+      const admin = createClient(url, serviceKey)
+      const del = await admin.from('leaderboard').delete().gt('time_seconds', -1)
+      if (del.error) return NextResponse.json({ error: del.error.message }, { status: 500 })
+      return NextResponse.json({ ok: true })
+    } catch (e) {
+      // fall through to public client attempts
+    }
+  }
+  // Fallbacks: try SECURITY DEFINER RPC, else public delete (requires policy)
   const rpc = await supabase.rpc('leaderboard_clear')
   if (rpc.error) {
-    // fallback: client-side delete with policy
     const del = await supabase.from('leaderboard').delete().gt('time_seconds', -1)
     if (del.error) return NextResponse.json({ error: del.error.message }, { status: 500 })
   }
