@@ -148,6 +148,7 @@ export default function CityStroller2() {
       { x:9, y:4, w:2, h:2, icon:'🧒', label:'KiTa' },
     ]
     const poiMap: Record<string,string> = {}
+    const poiAnchors = new Set<string>()
     blocks.forEach(b=>{
       for(let yy=b.y; yy<b.y+b.h; yy++){
         for(let xx=b.x; xx<b.x+b.w; xx++){
@@ -155,25 +156,30 @@ export default function CityStroller2() {
           // Für KiTa einmalig mit Label beschriften (oben links)
           if (b.label && xx===b.x && yy===b.y) {
             poiMap[`${xx},${yy}`]=`${b.icon} ${b.label}`
+            poiAnchors.add(`${xx},${yy}`)
           } else {
             poiMap[`${xx},${yy}`]=b.icon
           }
         }
       }
+      // Anker für jeden POI-Block (oben links)
+      poiAnchors.add(`${b.x},${b.y}`)
     })
 
-    // Sicherstellen: Mindestens 12 sichtbare POI-Icons
+    // Sicherstellen: Mindestens 16 sichtbare POI-Anker
     const ensurePoiIcons = () => {
       const needed = 16
-      const current = Object.keys(poiMap).length
+      const current = poiAnchors.size
       if (current >= needed) return
       const fillerIcons = ['🏥','🏫','🏛️','🏦','🏪','🏬','⛪','🏨','🏢','🏘️','🖼️','🚒','🏟️','🛍️','🍽️']
       let idx = 0
-      for (let y = 3; y < GRID_SIZE-3 && Object.keys(poiMap).length < needed; y+=2) {
-        for (let x = 3; x < GRID_SIZE-3 && Object.keys(poiMap).length < needed; x+=2) {
-          if (m[y][x] !== TileType.GOAL) {
+      for (let y = 3; y < GRID_SIZE-3 && poiAnchors.size < needed; y+=1) {
+        for (let x = 3; x < GRID_SIZE-3 && poiAnchors.size < needed; x+=1) {
+          const key = `${x},${y}`
+          if (m[y][x] !== TileType.GOAL && !poiAnchors.has(key)) {
             m[y][x] = TileType.WALL
-            poiMap[`${x},${y}`] = fillerIcons[idx % fillerIcons.length]
+            poiMap[key] = fillerIcons[idx % fillerIcons.length]
+            poiAnchors.add(key)
             idx++
           }
         }
@@ -194,6 +200,7 @@ export default function CityStroller2() {
       if (m[p.y][p.x]===TileType.EMPTY){
         m[p.y][p.x]=TileType.WALL
         poiMap[`${p.x},${p.y}`]=p.icon
+        poiAnchors.add(`${p.x},${p.y}`)
       }
     })
 
@@ -209,6 +216,7 @@ export default function CityStroller2() {
         if (!inGoal && !isStart && m[y][x] === TileType.EMPTY) {
           m[y][x] = TileType.WALL
           poiMap[`${x},${y}`] = beltIcons[bi % beltIcons.length]
+          poiAnchors.add(`${x},${y}`)
           bi++
         }
       }
@@ -221,6 +229,7 @@ export default function CityStroller2() {
         if (!inGoal && !isStart && m[y][x] === TileType.EMPTY) {
           m[y][x] = TileType.WALL
           poiMap[`${x},${y}`] = beltIcons[bi % beltIcons.length]
+          poiAnchors.add(`${x},${y}`)
           bi++
         }
       }

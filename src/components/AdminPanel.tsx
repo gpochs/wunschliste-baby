@@ -127,17 +127,17 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
         : 'bg-gradient-to-r from-blue-50 to-violet-50 border-2 border-blue-200'
     }`}>
       <CardContent className="p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="w-32 sm:w-40 flex-shrink-0">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+          <div className="w-full sm:w-40 flex-shrink-0">
             <img
               src={getItemImageUrl(item.item, item.website, item.image_url)}
               alt={item.item}
               loading="lazy"
-              className="w-full h-24 sm:h-28 object-cover rounded-md border"
+              className="w-full h-40 sm:h-28 object-cover rounded-md border"
             />
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-3">
+          <div className="flex-1 w-full">
+            <div className="flex flex-wrap items-center gap-3 mb-3">
               <h3 className={`text-xl font-bold ${
                 item.reserved ? 'text-gray-700' : 'text-violet-800'
               }`}>
@@ -170,7 +170,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 </p>
               )}
               {item.website && (
-                <p className="flex items-center gap-2">
+                <p className="flex items-center gap-2 break-all">
                   <span className="text-violet-600">🔗</span>
                   <span className="font-medium">Website:</span>{' '}
                   <a 
@@ -198,7 +198,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             </div>
           </div>
           
-          <div className="flex gap-2 ml-4">
+          <div className="flex flex-wrap gap-2 sm:ml-4 mt-2 sm:mt-0 w-full sm:w-auto">
             <Button
               onClick={() => toggleReserved(item)}
               variant="outline"
@@ -207,7 +207,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
                 item.reserved 
                   ? 'text-violet-700 border-2 border-violet-700 hover:bg-violet-50' 
                   : 'text-blue-600 border-2 border-blue-600 hover:bg-blue-50'
-              }`}
+              } w-full sm:w-auto`}
             >
               {item.reserved ? '🔄 Verfügbar machen' : '🎯 Als reserviert markieren'}
             </Button>
@@ -216,7 +216,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               onClick={() => setEditingItem(item)}
               variant="outline"
               size="sm"
-              className="border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+              className="border-2 border-purple-600 text-purple-600 hover:bg-purple-50 w-full sm:w-auto"
             >
               <Edit className="h-4 w-4 mr-1" />
               Bearbeiten
@@ -226,7 +226,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
               onClick={() => handleDeleteItem(item.id)}
               variant="outline"
               size="sm"
-              className="border-2 border-red-600 text-red-600 hover:bg-red-50"
+              className="border-2 border-red-600 text-red-600 hover:bg-red-50 w-full sm:w-auto"
             >
               <Trash2 className="h-4 w-4 mr-1" />
               Löschen
@@ -251,18 +251,18 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 bg-gradient-to-br from-blue-50 via-violet-50 to-purple-50 min-h-screen">
-      <div className="flex justify-between items-center mb-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 bg-gradient-to-br from-blue-50 via-violet-50 to-purple-50 min-h-screen">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8 sm:mb-12">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent mb-2">
             🛠️ Dein Admin-Bereich
           </h1>
-          <p className="text-lg text-gray-700">Verwalte deine Baby-Wunschliste mit Liebe! 💕</p>
+          <p className="text-base sm:text-lg text-gray-700">Verwalte deine Baby-Wunschliste mit Liebe! 💕</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
           <Button
             onClick={() => setAddDialogOpen(true)}
-            className="bg-gradient-to-r from-blue-500 to-violet-600 hover:from-blue-600 hover:to-violet-700 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-6 py-3"
+            className="bg-gradient-to-r from-blue-500 to-violet-600 hover:from-blue-600 hover:to-violet-700 text-white font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 px-6 py-3 flex-1 sm:flex-none"
           >
             <Plus className="h-5 w-5 mr-2" />
             Neues Geschenk hinzufügen
@@ -271,7 +271,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
           <Button
             onClick={() => setShowSettings(true)}
             variant="outline"
-            className="border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 px-6 py-3"
+            className="border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 px-6 py-3 flex-1 sm:flex-none"
           >
             <Settings className="h-5 w-5 mr-2" />
             Einstellungen
@@ -280,7 +280,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
           <Button
             onClick={onLogout}
             variant="outline"
-            className="border-2 border-gray-400 text-gray-700 hover:bg-gray-50 hover:border-gray-500 px-6 py-3"
+            className="border-2 border-gray-400 text-gray-700 hover:bg-gray-50 hover:border-gray-500 px-6 py-3 flex-1 sm:flex-none"
           >
             <LogOut className="h-5 w-5 mr-2" />
             Abmelden

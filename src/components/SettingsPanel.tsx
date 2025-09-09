@@ -123,27 +123,27 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
       {/* Header */}
-      <div className="text-center mb-12">
+      <div className="text-center mb-8 sm:mb-12">
         <div className="flex justify-center items-center gap-3 mb-6">
-          <span className="text-5xl">⚙️</span>
-          <span className="text-5xl">💌</span>
-          <span className="text-5xl">💕</span>
+          <span className="text-4xl sm:text-5xl">⚙️</span>
+          <span className="text-4xl sm:text-5xl">💌</span>
+          <span className="text-4xl sm:text-5xl">💕</span>
         </div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-4">
+        <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-slate-800 via-blue-800 to-indigo-800 bg-clip-text text-transparent mb-4">
           E-Mail-Einstellungen
         </h1>
-        <p className="text-lg text-slate-700 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-base sm:text-lg text-slate-700 max-w-2xl mx-auto leading-relaxed">
           Konfiguriere die E-Mail-Adressen, an die wir Benachrichtigungen über neue Reservierungen senden! 📬
         </p>
       </div>
 
       {/* Settings Card */}
       <Card className="bg-white shadow-2xl border-0 overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-slate-800 to-blue-800 text-white p-8">
-          <CardTitle className="text-2xl font-bold flex items-center gap-3">
-            <Mail className="h-8 w-8" />
+        <CardHeader className="bg-gradient-to-r from-slate-800 to-blue-800 text-white p-6 sm:p-8">
+          <CardTitle className="text-xl sm:text-2xl font-bold flex items-center gap-3">
+            <Mail className="h-7 w-7 sm:h-8 sm:w-8" />
             Benachrichtigungen konfigurieren
           </CardTitle>
           <p className="text-slate-200 mt-2">
@@ -151,7 +151,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
           </p>
         </CardHeader>
         
-        <CardContent className="p-8">
+        <CardContent className="p-6 sm:p-8">
           <div className="space-y-8">
             {/* Partner 1 */}
             <div className="space-y-4">
@@ -160,7 +160,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                   <User className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <Label className="text-lg font-bold text-slate-800">
+                  <Label className="text-base sm:text-lg font-bold text-slate-800">
                     Partner:in 1 (Haupt-E-Mail) *
                   </Label>
                   <p className="text-sm text-slate-600">
@@ -176,7 +176,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                   onChange={(e) => handleInputChange('parent_email_1', e.target.value)}
                   placeholder="deine.email@beispiel.de"
                   disabled={loading || saving}
-                  className={`h-14 text-lg border-2 transition-all duration-200 ${
+                  className={`h-14 text-base sm:text-lg border-2 transition-all duration-200 ${
                     settings.parent_email_1.trim() 
                       ? validateEmail(settings.parent_email_1)
                         ? 'border-violet-500 bg-violet-50 focus:border-violet-600 focus:ring-violet-500'
@@ -220,7 +220,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                   <Heart className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <Label className="text-lg font-bold text-slate-800">
+                  <Label className="text-base sm:text-lg font-bold text-slate-800">
                     Partner:in 2 (Optionale E-Mail)
                   </Label>
                   <p className="text-sm text-slate-600">
@@ -236,7 +236,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
                   onChange={(e) => handleInputChange('parent_email_2', e.target.value)}
                   placeholder="partner.email@beispiel.de (optional)"
                   disabled={loading || saving}
-                  className={`h-14 text-lg border-2 transition-all duration-200 ${
+                  className={`h-14 text-base sm:text-lg border-2 transition-all duration-200 ${
                     settings.parent_email_2.trim() 
                       ? validateEmail(settings.parent_email_2)
                         ? 'border-violet-500 bg-violet-50 focus:border-violet-600 focus:ring-violet-500'
@@ -305,11 +305,11 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 pt-8 border-t border-slate-200">
+          <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-slate-200">
             <Button
               onClick={onBack}
               variant="outline"
-              className="flex-1 h-14 text-lg border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400"
+              className="w-full sm:w-auto h-14 text-lg border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400"
             >
               ← Zurück zum Admin
             </Button>
@@ -317,7 +317,7 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
             <Button
               onClick={handleSave}
               disabled={!isFormValid() || saving || loading}
-              className="flex-1 h-14 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+              className="w-full sm:w-auto h-14 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
               {saving ? (
                 <>
