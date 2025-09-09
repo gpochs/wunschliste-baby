@@ -110,16 +110,21 @@ export default function SettingsPanel({ onBack }: SettingsPanelProps) {
   }
 
   const handleClearLeaderboard = () => {
-    const confirmed = confirm('Möchtest du die Spiel-Rangliste wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')
+    const confirmed = confirm('Möchtest du die Spiel-Rangliste für alle Geräte wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')
     if (!confirmed) return
-    try {
-      localStorage.removeItem('cityStrollerLeaderboard')
-      setLeaderboardCount(0)
-      toast.success('🏁 Rangliste erfolgreich gelöscht!')
-    } catch (error) {
-      console.error('Error clearing leaderboard:', error)
-      toast.error('Ups! Rangliste konnte nicht gelöscht werden.')
-    }
+    ;(async () => {
+      try {
+        const res = await fetch('/api/leaderboard', { method: 'DELETE' })
+        if (!res.ok) throw new Error('Failed to delete leaderboard')
+        // client fallback löschen
+        try { localStorage.removeItem('cityStrollerLeaderboard') } catch {}
+        setLeaderboardCount(0)
+        toast.success('🏁 Rangliste erfolgreich gelöscht – für alle!')
+      } catch (error) {
+        console.error('Error clearing leaderboard:', error)
+        toast.error('Ups! Rangliste konnte nicht gelöscht werden.')
+      }
+    })()
   }
 
   return (

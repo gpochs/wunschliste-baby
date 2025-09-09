@@ -23,3 +23,13 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ entry: data?.[0] }, { status: 201 })
 }
+
+export async function DELETE() {
+  // delete all leaderboard entries
+  const { error } = await supabase
+    .from('leaderboard')
+    .delete()
+    .gt('time_seconds', -1)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}
