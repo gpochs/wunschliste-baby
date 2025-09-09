@@ -507,15 +507,24 @@ export default function CityStroller() {
 
   // Leaderboard laden
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('cityStrollerLeaderboard')
-      if (raw) {
-        const parsed = JSON.parse(raw) as LeaderboardEntry[]
-        setLeaderboard(parsed)
-      }
-    } catch {
-      // ignore
+    const load = async () => {
+      try{
+        const res = await fetch('/api/leaderboard', { cache:'no-store' })
+        if (res.ok){
+          const json = await res.json() as { entries: { name:string; time_seconds:number; date_iso:string }[] }
+          setLeaderboard(json.entries.map(e=>({ name:e.name, timeSeconds:e.time_seconds, dateIso:e.date_iso })))
+          return
+        }
+      } catch {}
+      try {
+        const raw = localStorage.getItem('cityStrollerLeaderboard')
+        if (raw) {
+          const parsed = JSON.parse(raw) as LeaderboardEntry[]
+          setLeaderboard(parsed)
+        }
+      } catch {}
     }
+    load()
   }, [])
 
   const saveLeaderboard = (entries: LeaderboardEntry[]) => {
@@ -530,9 +539,23 @@ export default function CityStroller() {
   const handleSaveScore = () => {
     const name = playerName.trim()
     if (!name) return
-    const entries = [...leaderboard, { name, timeSeconds: elapsedSeconds, dateIso: new Date().toISOString() }]
-    entries.sort((a, b) => a.timeSeconds - b.timeSeconds)
-    saveLeaderboard(entries.slice(0, 10))
+    const nowIso = new Date().toISOString()
+    fetch('/api/leaderboard', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, timeSeconds: elapsedSeconds }) })
+      .catch(()=>null)
+      .finally(async ()=>{
+        try{
+          const res = await fetch('/api/leaderboard', { cache:'no-store' })
+          if (res.ok){
+            const json = await res.json() as { entries: { name:string; time_seconds:number; date_iso:string }[] }
+            const entries = json.entries.map(e=>({ name:e.name, timeSeconds:e.time_seconds, dateIso:e.date_iso }))
+            saveLeaderboard(entries)
+            return
+          }
+        } catch {}
+        const entries = [...leaderboard, { name, timeSeconds: elapsedSeconds, dateIso: nowIso }]
+        entries.sort((a, b) => a.timeSeconds - b.timeSeconds)
+        saveLeaderboard(entries.slice(0, 10))
+      })
   }
 
   const formatTime = (secs: number) => {

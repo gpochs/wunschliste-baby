@@ -97,3 +97,23 @@ INSERT INTO wishlist_items (item, size, color, notes) VALUES
   ('Decke', '', 'Hellblau', 'Warm und kuschelig'),
   ('Buch: "Gute Nacht"', '', '', 'Geschichten zum Einschlafen')
 ON CONFLICT DO NOTHING;
+
+-- Leaderboard table for shared scores
+CREATE TABLE IF NOT EXISTS leaderboard (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  time_seconds NUMERIC NOT NULL CHECK (time_seconds >= 0),
+  date_iso TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_leaderboard_time ON leaderboard(time_seconds ASC);
+
+ALTER TABLE leaderboard ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname='read_leaderboard') THEN
+    CREATE POLICY read_leaderboard ON leaderboard FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname='insert_leaderboard') THEN
+    CREATE POLICY insert_leaderboard ON leaderboard FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;

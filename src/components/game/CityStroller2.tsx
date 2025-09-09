@@ -10,8 +10,10 @@ import {
   ChevronLeft, 
   ChevronRight,
   RotateCcw,
-  Settings
+  Settings,
+  Trophy
 } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ENABLE_CITY_STYLING, CITY_STYLING } from '@/city/config'
 
 enum TileType {
@@ -53,6 +55,7 @@ export default function CityStroller2() {
   const [playerName, setPlayerName] = useState('')
   const [leaderboard, setLeaderboard] = useState<{ name: string; timeSeconds: number; dateIso: string }[]>([])
   const [saveState, setSaveState] = useState<'idle'|'saving'|'done'|'error'>('idle')
+  const [showLeaderboardDialog, setShowLeaderboardDialog] = useState(false)
 
   const vehiclesRef = useRef<Vehicle[]>([])
   const rafRef = useRef<number>(0)
@@ -392,6 +395,10 @@ export default function CityStroller2() {
         all.push({ type:'car', speedTilesPerSecond:4, path:p, t:Math.random()*p.length })
         all.push({ type:'moto', speedTilesPerSecond:3, path:p, t:Math.random()*p.length })
         all.push({ type:'taxi', speedTilesPerSecond:4, path:p, t:Math.random()*p.length })
+        // zusätzliche Orbiter (3 weitere Fahrzeuge)
+        all.push({ type:'police', speedTilesPerSecond:4, path:p, t:Math.random()*p.length })
+        all.push({ type:'bike', speedTilesPerSecond:2, path:p, t:Math.random()*p.length })
+        all.push({ type:'scooter', speedTilesPerSecond:2, path:p, t:Math.random()*p.length })
       }
     })
     vehiclesRef.current = all
@@ -411,7 +418,19 @@ export default function CityStroller2() {
 
   // Leaderboard
   useEffect(()=>{
-    try{ const raw=localStorage.getItem('cityStrollerLeaderboard'); if(raw) setLeaderboard(JSON.parse(raw)) }catch{}
+    const fetchLb = async () => {
+      try {
+        const res = await fetch('/api/leaderboard', { cache: 'no-store' })
+        if (res.ok) {
+          const json = await res.json() as { entries: { name:string; time_seconds:number; date_iso:string }[] }
+          setLeaderboard(json.entries.map(e=>({ name:e.name, timeSeconds:e.time_seconds, dateIso:e.date_iso })))
+          return
+        }
+      } catch {}
+      // fallback local
+      try{ const raw=localStorage.getItem('cityStrollerLeaderboard'); if(raw) setLeaderboard(JSON.parse(raw)) }catch{}
+    }
+    fetchLb()
   },[])
   const saveLeaderboard=(entries: typeof leaderboard)=>{
     setLeaderboard(entries)
@@ -422,11 +441,29 @@ export default function CityStroller2() {
     if (!name) return
     try {
       setSaveState('saving')
-      const next=[...leaderboard,{name,timeSeconds:elapsedSeconds,dateIso:new Date().toISOString()}]
-        .sort((a,b)=>a.timeSeconds-b.timeSeconds)
-        .slice(0,10)
-      saveLeaderboard(next)
-      setSaveState('done')
+      const nowIso = new Date().toISOString()
+      fetch('/api/leaderboard', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, timeSeconds: elapsedSeconds }) })
+        .catch(()=>null)
+        .finally(async ()=>{
+          try{
+            const res = await fetch('/api/leaderboard', { cache:'no-store' })
+            if (res.ok){
+              const json = await res.json() as { entries: { name:string; time_seconds:number; date_iso:string }[] }
+              const entries = json.entries.map(e=>({ name:e.name, timeSeconds:e.time_seconds, dateIso:e.date_iso }))
+              setLeaderboard(entries)
+              // also cache locally
+              saveLeaderboard(entries)
+            } else {
+              const next=[...leaderboard,{name,timeSeconds:elapsedSeconds,dateIso:nowIso}].sort((a,b)=>a.timeSeconds-b.timeSeconds).slice(0,10)
+              saveLeaderboard(next)
+            }
+            setSaveState('done')
+          } catch {
+            const next=[...leaderboard,{name,timeSeconds:elapsedSeconds,dateIso:nowIso}].sort((a,b)=>a.timeSeconds-b.timeSeconds).slice(0,10)
+            saveLeaderboard(next)
+            setSaveState('done')
+          }
+        })
     } catch {
       setSaveState('error')
     }
@@ -745,6 +782,35 @@ export default function CityStroller2() {
           </Button>
         </div>
       </div>
+
+      {/* Mobile: Floating Rangliste Button + Dialog */}
+      <div className="fixed right-4 bottom-24 sm:hidden z-30">
+        <Button onClick={()=>setShowLeaderboardDialog(true)} className="bg-violet-600 hover:bg-violet-700 text-white shadow-lg">
+          <Trophy className="h-4 w-4 mr-2" /> Rangliste
+        </Button>
+      </div>
+      <Dialog open={showLeaderboardDialog} onOpenChange={setShowLeaderboardDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rangliste – Bestzeiten</DialogTitle>
+          </DialogHeader>
+          {leaderboard.length === 0 ? (
+            <p className="text-sm text-gray-600">Noch keine Einträge. Spiele und sichere dir den ersten Platz! 🏆</p>
+          ) : (
+            <ol className="space-y-1">
+              {leaderboard.map((entry, idx) => (
+                <li key={`${entry.name}-${entry.dateIso}-${idx}`} className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700">
+                    <span className="inline-block w-6 text-right mr-2">{idx + 1}.</span>
+                    <span className="font-medium">{entry.name}</span>
+                  </span>
+                  <span className="font-mono text-indigo-700">{formatTime(entry.timeSeconds)}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
