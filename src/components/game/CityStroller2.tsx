@@ -130,32 +130,33 @@ export default function CityStroller2() {
       // KiTa (2x2) mit Label
       { x:9, y:4, w:2, h:2, icon:'🧒', label:'KiTa' },
     ]
+    // 15 weitere 1x1-POIs (alle verschieden)
     const anchorPois: Array<{ x:number; y:number; icon:string }> = [
       { x:3,  y:3,  icon:'🏫' }, // Schule
       { x:15, y:3,  icon:'🏥' }, // Spital
-      { x:4,  y:6,  icon:'🏛️' }, // Rathaus/Museum
+      { x:4,  y:6,  icon:'🏛️' }, // Museum/Rathaus
       { x:15, y:6,  icon:'🏦' }, // Bank
-      { x:12, y:4,  icon:'🏬' }, // Einkaufszentrum
+      { x:12, y:4,  icon:'🏪' }, // Laden
       { x:7,  y:9,  icon:'⛪' }, // Kirche
       { x:11, y:14, icon:'🏨' }, // Hotel
       { x:15, y:14, icon:'🏢' }, // Büro
-      { x:5,  y:8,  icon:'🏘️' }, // Wohnblock
+      { x:5,  y:8,  icon:'🏬' }, // Warenhaus
       { x:6,  y:12, icon:'🏟️' }, // Stadion
-      { x:14, y:10, icon:'🛍️' }, // Shopping
-      { x:8,  y:6,  icon:'🍽️' }, // Restaurant
-      { x:12, y:13, icon:'🖼️' }, // Museum
+      { x:14, y:10, icon:'🍽️' }, // Restaurant
+      { x:8,  y:6,  icon:'🖼️' }, // Galerie
+      { x:12, y:13, icon:'🏭' }, // Fabrik
       { x:7,  y:14, icon:'🚒' }, // Feuerwehr
       { x:13, y:9,  icon:'🏙️' }, // Skyline
     ]
     const poiMap: Record<string,string> = {}
     const poiAnchors = new Set<string>()
 
-    // KiTa-Block (2x2) anlegen
+    // KiTa-Block (2x2) anlegen — Label auf allen 4 Feldern für bessere Sichtbarkeit
     blocks.forEach(b=>{
       for(let yy=b.y; yy<b.y+b.h; yy++){
         for(let xx=b.x; xx<b.x+b.w; xx++){
           if (m[yy] && m[yy][xx] !== TileType.GOAL) m[yy][xx]=TileType.WALL
-          if (b.label && xx===b.x && yy===b.y) {
+          if (b.label) {
             poiMap[`${xx},${yy}`]=`${b.icon} ${b.label}`
             poiAnchors.add(`${xx},${yy}`)
           } else {
@@ -182,13 +183,13 @@ export default function CityStroller2() {
     const forests = [ [ {x:16,y:6},{x:16,y:7},{x:15,y:7} ], [ {x:7,y:15},{x:8,y:15},{x:7,y:14} ], [ {x:12,y:3},{x:13,y:3},{x:12,y:4} ] ]
     forests.flat().forEach(p=>{ if (m[p.y][p.x]===TileType.EMPTY) m[p.y][p.x]=TileType.TREE })
 
-    // Deko (Ampeln/Plaza… blockierend laut Vorgabe)
+    // Deko (Ampeln/Plaza… blockierend laut Vorgabe) — nur nicht-Gebäude-Icons verwenden
     const decorSpots: GridPoint[] = [
       {x:6,y:6},{x:9,y:9},{x:12,y:12},{x:5,y:13},{x:14,y:5},{x:9,y:6},{x:12,y:9},{x:7,y:3},
       {x:3,y:8},{x:8,y:3},{x:10,y:8},{x:11,y:6},{x:13,y:11},{x:6,y:11},{x:4,y:9},{x:15,y:11},
       {x:2,y:10},{x:10,y:2},{x:17,y:10},{x:10,y:17},{x:4,y:4},{x:15,y:9},{x:9,y:15}
     ]
-    const decorIcons = ['🚦','⛲','🅿️','☕','🍔','🚏','🎡','🚌','🚦','🌉','🚲','🏞️','🧋','🍟','🧁','🎠','🏟️','🏗️','🏢','🏙️','🌳','🏬','🏘️']
+    const decorIcons = ['🚦','⛲','🅿️','☕','🍔','🚏','🎡','🚌','🌉','🚲','🏞️','🧋','🍟','🧁','🎠','🌳','🚧','🎺','🎨','🪴','🚻','📮','📫']
     const decorMap: Record<string,string> = {}
     decorSpots.forEach((p,i)=>{
       if (m[p.y][p.x]===TileType.EMPTY) {
@@ -434,7 +435,7 @@ export default function CityStroller2() {
       {
         const poi = poiIconByKeyRef.current[`${x},${y}`]
         content = poi ? (
-          <span className="text-[13px] md:text-[16px] leading-none text-gray-800 drop-shadow-sm select-none">
+          <span className="text-[14px] md:text-[18px] leading-none text-gray-800 drop-shadow-sm select-none font-semibold">
             {poi}
           </span>
         ) : null
