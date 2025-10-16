@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { WishlistItem } from '@/lib/types'
+import { WishlistItem, ContentSettings } from '@/lib/types'
 import { getItemImageUrl } from '@/lib/itemImage'
 import { supabase } from '@/lib/supabase'
 import ReserveDialog from './ReserveDialog'
@@ -10,14 +10,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ExternalLink, Gift, CheckCircle, Gamepad2 } from 'lucide-react'
 import Link from 'next/link'
 
+const DEFAULT_CONTENT: ContentSettings = {
+  landing_page_title: 'Unsere Baby-Wunschliste',
+  landing_page_welcome_text: 'Hallo du Liebe:r! 🥰 Wähle ein Item aus und reserviere es mit deiner E-Mail-Adresse. Vielen Dank, dass du uns bei der Vorbereitung auf unser kleines Wunder unterstützen möchtest! 💕',
+  landing_page_emojis: '👶 🍼 🦄 ⭐',
+  landing_page_image_1_url: '/images/Hochzeit_JG-68.jpg',
+  landing_page_image_2_url: '/images/Baby 14.08.png',
+  section_available_title: 'Verfügbare Items',
+  section_reserved_title: 'Bereits reserviert',
+  email_gifter_subject: '',
+  email_gifter_message: '',
+  email_gifter_signature: '',
+  email_parent_subject: '',
+  email_parent_message: '',
+  email_parent_signature: ''
+}
+
 export default function Wishlist() {
   const [items, setItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedItem, setSelectedItem] = useState<WishlistItem | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [content, setContent] = useState<ContentSettings>(DEFAULT_CONTENT)
 
   useEffect(() => {
     fetchItems()
+    fetchContent()
   }, [])
 
   const fetchItems = async () => {
@@ -25,7 +43,7 @@ export default function Wishlist() {
       const { data, error } = await supabase
         .from('wishlist_items')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('position', { ascending: true })
 
       if (error) {
         console.error('Error fetching items:', error)
@@ -37,6 +55,41 @@ export default function Wishlist() {
       console.error('Error:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchContent = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('id', 1)
+        .maybeSingle()
+
+      if (error) {
+        console.error('Error fetching content:', error)
+        return
+      }
+
+      if (data) {
+        setContent({
+          landing_page_title: data.landing_page_title || DEFAULT_CONTENT.landing_page_title,
+          landing_page_welcome_text: data.landing_page_welcome_text || DEFAULT_CONTENT.landing_page_welcome_text,
+          landing_page_emojis: data.landing_page_emojis || DEFAULT_CONTENT.landing_page_emojis,
+          landing_page_image_1_url: data.landing_page_image_1_url || DEFAULT_CONTENT.landing_page_image_1_url,
+          landing_page_image_2_url: data.landing_page_image_2_url || DEFAULT_CONTENT.landing_page_image_2_url,
+          section_available_title: data.section_available_title || DEFAULT_CONTENT.section_available_title,
+          section_reserved_title: data.section_reserved_title || DEFAULT_CONTENT.section_reserved_title,
+          email_gifter_subject: data.email_gifter_subject || '',
+          email_gifter_message: data.email_gifter_message || '',
+          email_gifter_signature: data.email_gifter_signature || '',
+          email_parent_subject: data.email_parent_subject || '',
+          email_parent_message: data.email_parent_message || '',
+          email_parent_signature: data.email_parent_signature || ''
+        })
+      }
+    } catch (error) {
+      console.error('Error:', error)
     }
   }
 
@@ -166,24 +219,22 @@ export default function Wishlist() {
     <div className="max-w-5xl mx-auto px-6 py-12 bg-gradient-to-br from-blue-50 via-violet-50 to-purple-50 min-h-screen">
       <div className="text-center mb-12">
         <div className="flex justify-center items-center gap-3 mb-4">
-          <span className="text-4xl">👶</span>
-          <span className="text-4xl">🍼</span>
-          <span className="text-4xl">🦄</span>
-          <span className="text-4xl">⭐</span>
+          {content.landing_page_emojis.split(' ').filter(e => e.trim()).map((emoji, i) => (
+            <span key={i} className="text-4xl">{emoji}</span>
+          ))}
         </div>
         <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-violet-600 to-purple-600 bg-clip-text text-transparent mb-4">
-          Unsere Baby-Wunschliste
+          {content.landing_page_title}
         </h1>
         <p className="text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed">
-          Hallo du Liebe:r! 🥰 Wähle ein Item aus und reserviere es mit deiner E-Mail-Adresse. 
-          Vielen Dank, dass du uns bei der Vorbereitung auf unser kleines Wunder unterstützen möchtest! 💕
+          {content.landing_page_welcome_text}
         </p>
       </div>
 
       {/* Bilder unter Titel */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-        <img src="/images/Hochzeit_JG-68.jpg" alt="Hochzeit" className="w-full h-64 object-cover rounded-xl border" />
-        <img src="/images/Baby 14.08.png" alt="Baby 14.08" className="w-full h-64 object-cover rounded-xl border" />
+        <img src={content.landing_page_image_1_url} alt="Bild 1" className="w-full h-64 object-cover rounded-xl border" />
+        <img src={content.landing_page_image_2_url} alt="Bild 2" className="w-full h-64 object-cover rounded-xl border" />
       </div>
 
       {/* Verfügbare Items */}
@@ -191,7 +242,7 @@ export default function Wishlist() {
           <CardHeader className="px-0 pb-6">
           <CardTitle className="text-3xl font-bold text-indigo-700 flex items-center justify-center gap-3">
             <Gift className="h-8 w-8" />
-            <span>Verfügbare Items</span>
+            <span>{content.section_available_title}</span>
             <span className="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full text-xl font-bold">
               {availableItems.length}
             </span>
@@ -237,7 +288,7 @@ export default function Wishlist() {
           <CardHeader className="px-0 pb-6">
             <CardTitle className="text-3xl font-bold text-gray-700 flex items-center justify-center gap-3">
               <CheckCircle className="h-8 w-8" />
-              <span>Bereits reserviert</span>
+              <span>{content.section_reserved_title}</span>
               <span className="bg-gray-100 text-gray-700 px-4 py-2 rounded-full text-xl font-bold">
                 {reservedItems.length}
               </span>

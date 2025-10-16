@@ -6,9 +6,10 @@ import { getItemImageUrl } from '@/lib/itemImage'
 import { supabase } from '@/lib/supabase'
 import AddItemDialog from './AddItemDialog'
 import SettingsPanel from './SettingsPanel'
+import ContentManagementPanel from './ContentManagementPanel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Edit, Trash2, ExternalLink, Gift, CheckCircle, Plus, LogOut, Settings } from 'lucide-react'
+import { Edit, Trash2, ExternalLink, Gift, CheckCircle, Plus, LogOut, Settings, ChevronUp, ChevronDown, Type } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface AdminPanelProps {
@@ -21,6 +22,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [showContentManagement, setShowContentManagement] = useState(false)
 
   useEffect(() => {
     fetchItems()
@@ -31,7 +33,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
       const { data, error } = await supabase
         .from('wishlist_items')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('position', { ascending: true })
 
       if (error) throw error
       setItems(data || [])
@@ -43,11 +45,21 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     }
   }
 
-  const handleAddItem = async (itemData: Omit<WishlistItem, 'id' | 'created_at' | 'updated_at' | 'reserved' | 'reserved_by' | 'reserved_at'>) => {
+  const handleAddItem = async (itemData: Omit<WishlistItem, 'id' | 'created_at' | 'updated_at' | 'reserved' | 'reserved_by' | 'reserved_at' | 'position'>) => {
     try {
+      // Get the highest position and add 1
+      const { data: maxData } = await supabase
+        .from('wishlist_items')
+        .select('position')
+        .order('position', { ascending: false })
+        .limit(1)
+      
+      const maxPosition = maxData?.[0]?.position || 0
+      const newPosition = maxPosition + 1
+
       const { error } = await supabase
         .from('wishlist_items')
-        .insert([itemData])
+        .insert([{ ...itemData, position: newPosition }])
 
       if (error) throw error
 
@@ -60,7 +72,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     }
   }
 
-  const handleEditItem = async (itemData: Omit<WishlistItem, 'id' | 'created_at' | 'updated_at' | 'reserved' | 'reserved_by' | 'reserved_at'>) => {
+  const handleEditItem = async (itemData: Omit<WishlistItem, 'id' | 'created_at' | 'updated_at' | 'reserved' | 'reserved_by' | 'reserved_at' | 'position'>) => {
     if (!editingItem) return
 
     try {
@@ -120,7 +132,63 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     }
   }
 
-  const renderItem = (item: WishlistItem) => (
+  const moveItemUp = async (item: WishlistItem, allItems: WishlistItem[]) => {
+    const currentIndex = allItems.findIndex(i => i.id === item.id)
+    if (currentIndex <= 0) return // Already at top
+    
+    const previousItem = allItems[currentIndex - 1]
+    
+    try {
+      // Swap positions
+      const { error: error1 } = await supabase
+        .from('wishlist_items')
+        .update({ position: previousItem.position })
+        .eq('id', item.id)
+      
+      const { error: error2 } = await supabase
+        .from('wishlist_items')
+        .update({ position: item.position })
+        .eq('id', previousItem.id)
+
+      if (error1 || error2) throw error1 || error2
+
+      toast.success('⬆️ Geschenk nach oben verschoben! ✨')
+      fetchItems()
+    } catch (error) {
+      console.error('Error moving item up:', error)
+      toast.error('Ups! Fehler beim Verschieben! 🥺')
+    }
+  }
+
+  const moveItemDown = async (item: WishlistItem, allItems: WishlistItem[]) => {
+    const currentIndex = allItems.findIndex(i => i.id === item.id)
+    if (currentIndex >= allItems.length - 1) return // Already at bottom
+    
+    const nextItem = allItems[currentIndex + 1]
+    
+    try {
+      // Swap positions
+      const { error: error1 } = await supabase
+        .from('wishlist_items')
+        .update({ position: nextItem.position })
+        .eq('id', item.id)
+      
+      const { error: error2 } = await supabase
+        .from('wishlist_items')
+        .update({ position: item.position })
+        .eq('id', nextItem.id)
+
+      if (error1 || error2) throw error1 || error2
+
+      toast.success('⬇️ Geschenk nach unten verschoben! ✨')
+      fetchItems()
+    } catch (error) {
+      console.error('Error moving item down:', error)
+      toast.error('Ups! Fehler beim Verschieben! 🥺')
+    }
+  }
+
+  const renderItem = (item: WishlistItem, index: number, itemsList: WishlistItem[]) => (
     <Card key={item.id} className={`mb-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 ${
       item.reserved 
         ? 'bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-200' 
@@ -128,6 +196,30 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     }`}>
       <CardContent className="p-6">
         <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+          {/* Reorder buttons on the left */}
+          <div className="flex flex-col gap-1">
+            <Button
+              onClick={() => moveItemUp(item, itemsList)}
+              variant="outline"
+              size="sm"
+              disabled={index === 0}
+              className="h-8 w-8 p-0 border-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Nach oben"
+            >
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={() => moveItemDown(item, itemsList)}
+              variant="outline"
+              size="sm"
+              disabled={index === itemsList.length - 1}
+              className="h-8 w-8 p-0 border-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Nach unten"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </div>
+
           <div className="w-full sm:w-40 flex-shrink-0">
             <img
               src={getItemImageUrl(item.item, item.website, item.image_url)}
@@ -241,6 +333,10 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     return <SettingsPanel onBack={() => setShowSettings(false)} />
   }
 
+  if (showContentManagement) {
+    return <ContentManagementPanel onBack={() => setShowContentManagement(false)} />
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -269,12 +365,21 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
           </Button>
           
           <Button
+            onClick={() => setShowContentManagement(true)}
+            variant="outline"
+            className="border-2 border-purple-600 text-purple-600 hover:bg-purple-50 px-6 py-3 flex-1 sm:flex-none"
+          >
+            <Type className="h-5 w-5 mr-2" />
+            Inhalte bearbeiten
+          </Button>
+          
+          <Button
             onClick={() => setShowSettings(true)}
             variant="outline"
             className="border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 px-6 py-3 flex-1 sm:flex-none"
           >
             <Settings className="h-5 w-5 mr-2" />
-            Einstellungen
+            E-Mail-Einstellungen
           </Button>
           
           <Button
@@ -302,7 +407,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
           </CardHeader>
           
           <div className="space-y-6">
-            {items.filter(item => !item.reserved).map(renderItem)}
+            {items.filter(item => !item.reserved).map((item, index, arr) => renderItem(item, index, arr))}
           </div>
         </div>
 
@@ -319,7 +424,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
           </CardHeader>
           
           <div className="space-y-6">
-            {items.filter(item => item.reserved).map(renderItem)}
+            {items.filter(item => item.reserved).map((item, index, arr) => renderItem(item, index, arr))}
           </div>
         </div>
       </div>

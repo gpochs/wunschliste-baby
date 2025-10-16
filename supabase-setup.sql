@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS wishlist_items (
   reserved BOOLEAN DEFAULT FALSE,
   reserved_by TEXT,
   reserved_at TIMESTAMP WITH TIME ZONE,
+  position INTEGER NOT NULL DEFAULT 1,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS reservations (
 -- Create index for better performance
 CREATE INDEX IF NOT EXISTS idx_wishlist_items_created_at ON wishlist_items(created_at);
 CREATE INDEX IF NOT EXISTS idx_wishlist_items_reserved ON wishlist_items(reserved);
+CREATE INDEX IF NOT EXISTS idx_wishlist_items_position ON wishlist_items(position);
 CREATE INDEX IF NOT EXISTS idx_reservations_item_id ON reservations(item_id);
 
 -- Enable Row Level Security (RLS)
@@ -90,12 +92,12 @@ VALUES (1, NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert some sample data (optional)
-INSERT INTO wishlist_items (item, size, color, notes) VALUES
-  ('Strampler', '56', 'Blau', 'Für den Sommer geeignet'),
-  ('Spielzeug-Rassel', '', 'Bunt', 'Aus Holz, ungiftig'),
-  ('Bodys', '62', 'Rosa', '5er Pack, verschiedene Farben'),
-  ('Decke', '', 'Hellblau', 'Warm und kuschelig'),
-  ('Buch: "Gute Nacht"', '', '', 'Geschichten zum Einschlafen')
+INSERT INTO wishlist_items (item, size, color, notes, position) VALUES
+  ('Strampler', '56', 'Blau', 'Für den Sommer geeignet', 1),
+  ('Spielzeug-Rassel', '', 'Bunt', 'Aus Holz, ungiftig', 2),
+  ('Bodys', '62', 'Rosa', '5er Pack, verschiedene Farben', 3),
+  ('Decke', '', 'Hellblau', 'Warm und kuschelig', 4),
+  ('Buch: "Gute Nacht"', '', '', 'Geschichten zum Einschlafen', 5)
 ON CONFLICT DO NOTHING;
 
 -- Leaderboard table for shared scores

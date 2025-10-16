@@ -11,7 +11,7 @@ import { WishlistItem } from '@/lib/types'
 interface AddItemDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAdd: (itemData: Omit<WishlistItem, 'id' | 'created_at' | 'updated_at' | 'reserved' | 'reserved_by' | 'reserved_at'>) => void
+  onAdd: (itemData: Omit<WishlistItem, 'id' | 'created_at' | 'updated_at' | 'reserved' | 'reserved_by' | 'reserved_at' | 'position'>) => void
   editingItem?: WishlistItem | null
 }
 

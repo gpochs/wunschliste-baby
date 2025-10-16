@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { resend } from '@/lib/resend'
 
+// Helper function to replace placeholders in templates
+function replacePlaceholders(template: string, item: any, email: string): string {
+  return template
+    .replace(/{item_name}/g, item.item || '')
+    .replace(/{item_size}/g, item.size || '')
+    .replace(/{item_color}/g, item.color || '')
+    .replace(/{reserved_by}/g, email || '')
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('Reserve API called')
@@ -90,18 +99,33 @@ export async function POST(request: NextRequest) {
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@ailiteracy.ch'
     console.log('From email:', fromEmail)
 
+    // Fetch email templates from settings
+    const { data: emailSettings } = await supabase
+      .from('settings')
+      .select('email_gifter_subject, email_gifter_message, email_gifter_signature, email_parent_subject, email_parent_message, email_parent_signature')
+      .eq('id', 1)
+      .maybeSingle()
+
+    const gifterSubject = emailSettings?.email_gifter_subject || 'Bestätigung: {item_name} reserviert'
+    const gifterMessage = emailSettings?.email_gifter_message || 'Vielen Dank, dass du <strong>{item_name}</strong> aus unserer Baby-Wunschliste reserviert hast.'
+    const gifterSignature = emailSettings?.email_gifter_signature || 'Vielen Dank für deine Unterstützung!<br>Herzliche Grüße<br>Deine Baby-Eltern'
+
     // Send confirmation email to gifter
     try {
       console.log('Sending confirmation email to gifter')
+      const subject = replacePlaceholders(gifterSubject, item, email)
+      const message = replacePlaceholders(gifterMessage, item, email)
+      const signature = replacePlaceholders(gifterSignature, item, email)
+      
       await resend.emails.send({
         from: `Baby-Wunschliste <${fromEmail}>`,
         to: [email],
-        subject: `Bestätigung: ${item.item} reserviert`,
+        subject: subject,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #ec4899;">🎉 Vielen Dank für deine Reservierung!</h2>
             <p>Hallo!</p>
-            <p>Vielen Dank, dass du <strong>${item.item}</strong> aus unserer Baby-Wunschliste reserviert hast.</p>
+            <p>${message}</p>
             
             <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0;">Details deiner Reservierung:</h3>
@@ -112,9 +136,7 @@ export async function POST(request: NextRequest) {
               ${item.website ? `<p><strong>Website:</strong> <a href="${item.website}" target="_blank" rel="noopener">${item.website}</a></p>` : ''}
             </div>
             
-            <p>Vielen Dank für deine Unterstützung!<br>
-            Herzliche Grüße<br>
-            Deine Baby-Eltern</p>
+            <p>${signature}</p>
           </div>
         `
       })
@@ -140,15 +162,24 @@ export async function POST(request: NextRequest) {
     if (uniqueParentEmails.length > 0) {
       try {
         console.log('Sending notification email to parents:', uniqueParentEmails)
+        
+        const parentSubject = emailSettings?.email_parent_subject || 'Neue Reservierung: {item_name}'
+        const parentMessage = emailSettings?.email_parent_message || 'Jemand hat ein Item aus eurer Baby-Wunschliste reserviert:'
+        const parentSignature = emailSettings?.email_parent_signature || 'Das Item wurde automatisch als reserviert markiert.'
+        
+        const subject = replacePlaceholders(parentSubject, item, email)
+        const message = replacePlaceholders(parentMessage, item, email)
+        const signature = replacePlaceholders(parentSignature, item, email)
+        
         await resend.emails.send({
           from: `Baby-Wunschliste <${fromEmail}>`,
           to: uniqueParentEmails,
-          subject: `Neue Reservierung: ${item.item}`,
+          subject: subject,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #ec4899;">🎁 Neue Geschenk-Reservierung!</h2>
               <p>Hallo!</p>
-              <p>Jemand hat ein Item aus eurer Baby-Wunschliste reserviert:</p>
+              <p>${message}</p>
               
               <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin-top: 0;">Reserviertes Item:</h3>
@@ -161,7 +192,7 @@ export async function POST(request: NextRequest) {
                 <p><strong>Datum:</strong> ${new Date().toLocaleDateString('de-DE')}</p>
               </div>
               
-              <p>Das Item wurde automatisch als reserviert markiert.</p>
+              <p>${signature}</p>
             </div>
           `
         })
