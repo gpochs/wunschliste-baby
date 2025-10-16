@@ -309,7 +309,7 @@ export default function ContentManagementPanel({ onBack }: ContentManagementPane
                 </div>
               </div>
             </div>
-          ) : (
+          ) : activeTab === 'emails' ? (
             <div className="space-y-8">
               {/* Placeholder Info */}
               <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
