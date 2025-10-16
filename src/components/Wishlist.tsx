@@ -23,7 +23,15 @@ const DEFAULT_CONTENT: ContentSettings = {
   email_gifter_signature: '',
   email_parent_subject: '',
   email_parent_message: '',
-  email_parent_signature: ''
+  email_parent_signature: '',
+  popup_title: 'Geschenk reservieren',
+  popup_welcome_text: 'Hallo du Liebe:r! 🥰 Reserviere dieses tolle Geschenk für unser Baby!',
+  popup_gift_label: 'Geschenk',
+  popup_email_label: 'Deine E-Mail-Adresse *',
+  popup_confirmation_text: 'Du bekommst eine Bestätigung per E-Mail! 🎉',
+  popup_cancel_button: 'Abbrechen',
+  popup_reserve_button: 'Reservieren',
+  popup_success_message: '🎉 Yay! Das Geschenk ist jetzt für dich reserviert! Du bekommst gleich eine Bestätigung per E-Mail! 💕'
 }
 
 export default function Wishlist() {
@@ -85,7 +93,15 @@ export default function Wishlist() {
           email_gifter_signature: data.email_gifter_signature || '',
           email_parent_subject: data.email_parent_subject || '',
           email_parent_message: data.email_parent_message || '',
-          email_parent_signature: data.email_parent_signature || ''
+          email_parent_signature: data.email_parent_signature || '',
+          popup_title: data.popup_title || DEFAULT_CONTENT.popup_title,
+          popup_welcome_text: data.popup_welcome_text || DEFAULT_CONTENT.popup_welcome_text,
+          popup_gift_label: data.popup_gift_label || DEFAULT_CONTENT.popup_gift_label,
+          popup_email_label: data.popup_email_label || DEFAULT_CONTENT.popup_email_label,
+          popup_confirmation_text: data.popup_confirmation_text || DEFAULT_CONTENT.popup_confirmation_text,
+          popup_cancel_button: data.popup_cancel_button || DEFAULT_CONTENT.popup_cancel_button,
+          popup_reserve_button: data.popup_reserve_button || DEFAULT_CONTENT.popup_reserve_button,
+          popup_success_message: data.popup_success_message || DEFAULT_CONTENT.popup_success_message
         })
       }
     } catch (error) {
@@ -308,6 +324,7 @@ export default function Wishlist() {
           open={dialogOpen}
           onOpenChange={handleDialogClose}
           onSuccess={handleReservationSuccess}
+          content={content}
         />
       )}
     </div>

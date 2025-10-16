@@ -28,14 +28,22 @@ const DEFAULT_SETTINGS: ContentSettings = {
   email_gifter_signature: 'Vielen Dank für deine Unterstützung!<br>Herzliche Grüße<br>Deine Baby-Eltern',
   email_parent_subject: 'Neue Reservierung: {item_name}',
   email_parent_message: 'Jemand hat ein Item aus eurer Baby-Wunschliste reserviert:',
-  email_parent_signature: 'Das Item wurde automatisch als reserviert markiert.'
+  email_parent_signature: 'Das Item wurde automatisch als reserviert markiert.',
+  popup_title: 'Geschenk reservieren',
+  popup_welcome_text: 'Hallo du Liebe:r! 🥰 Reserviere dieses tolle Geschenk für unser Baby!',
+  popup_gift_label: 'Geschenk',
+  popup_email_label: 'Deine E-Mail-Adresse *',
+  popup_confirmation_text: 'Du bekommst eine Bestätigung per E-Mail! 🎉',
+  popup_cancel_button: 'Abbrechen',
+  popup_reserve_button: 'Reservieren',
+  popup_success_message: '🎉 Yay! Das Geschenk ist jetzt für dich reserviert! Du bekommst gleich eine Bestätigung per E-Mail! 💕'
 }
 
 export default function ContentManagementPanel({ onBack }: ContentManagementPanelProps) {
   const [settings, setSettings] = useState<ContentSettings>(DEFAULT_SETTINGS)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'page' | 'emails'>('page')
+  const [activeTab, setActiveTab] = useState<'page' | 'emails' | 'popup'>('page')
 
   useEffect(() => {
     loadSettings()
@@ -152,6 +160,14 @@ export default function ContentManagementPanel({ onBack }: ContentManagementPane
           <Mail className="h-4 w-4 mr-2" />
           E-Mail-Vorlagen
         </Button>
+        <Button
+          onClick={() => setActiveTab('popup')}
+          variant={activeTab === 'popup' ? 'default' : 'outline'}
+          className={activeTab === 'popup' ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : ''}
+        >
+          <Type className="h-4 w-4 mr-2" />
+          Popup-Texte
+        </Button>
       </div>
 
       {/* Content */}
@@ -163,10 +179,15 @@ export default function ContentManagementPanel({ onBack }: ContentManagementPane
                 <Type className="h-7 w-7 sm:h-8 sm:w-8" />
                 Landingpage-Inhalte
               </>
-            ) : (
+            ) : activeTab === 'emails' ? (
               <>
                 <Mail className="h-7 w-7 sm:h-8 sm:w-8" />
                 E-Mail-Vorlagen
+              </>
+            ) : (
+              <>
+                <Type className="h-7 w-7 sm:h-8 sm:w-8" />
+                Popup-Dialog-Texte
               </>
             )}
           </CardTitle>
@@ -368,6 +389,97 @@ export default function ContentManagementPanel({ onBack }: ContentManagementPane
                     value={settings.email_parent_signature}
                     onChange={(e) => handleInputChange('email_parent_signature', e.target.value)}
                     rows={2}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-blue-800 mb-2">💬 Popup-Dialog-Texte</h3>
+                <p className="text-sm text-blue-700">
+                  Hier kannst du alle Texte im Reservierungs-Popup anpassen. Diese erscheinen, wenn jemand ein Geschenk reservieren möchte.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <Label htmlFor="popup-title" className="font-medium">🎯 Dialog-Titel</Label>
+                  <Input
+                    id="popup-title"
+                    value={settings.popup_title}
+                    onChange={(e) => handleInputChange('popup_title', e.target.value)}
+                    placeholder="Geschenk reservieren"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="popup-welcome" className="font-medium">👋 Willkommens-Text</Label>
+                  <Input
+                    id="popup-welcome"
+                    value={settings.popup_welcome_text}
+                    onChange={(e) => handleInputChange('popup_welcome_text', e.target.value)}
+                    placeholder="Hallo du Liebe:r! 🥰 Reserviere dieses tolle Geschenk für unser Baby!"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="popup-gift-label" className="font-medium">🎁 Geschenk-Label</Label>
+                  <Input
+                    id="popup-gift-label"
+                    value={settings.popup_gift_label}
+                    onChange={(e) => handleInputChange('popup_gift_label', e.target.value)}
+                    placeholder="Geschenk"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="popup-email-label" className="font-medium">📧 E-Mail-Label</Label>
+                  <Input
+                    id="popup-email-label"
+                    value={settings.popup_email_label}
+                    onChange={(e) => handleInputChange('popup_email_label', e.target.value)}
+                    placeholder="Deine E-Mail-Adresse *"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="popup-confirmation" className="font-medium">💡 Bestätigungs-Text</Label>
+                  <Input
+                    id="popup-confirmation"
+                    value={settings.popup_confirmation_text}
+                    onChange={(e) => handleInputChange('popup_confirmation_text', e.target.value)}
+                    placeholder="Du bekommst eine Bestätigung per E-Mail! 🎉"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="popup-success" className="font-medium">🎉 Erfolgs-Nachricht</Label>
+                  <Input
+                    id="popup-success"
+                    value={settings.popup_success_message}
+                    onChange={(e) => handleInputChange('popup_success_message', e.target.value)}
+                    placeholder="🎉 Yay! Das Geschenk ist jetzt für dich reserviert!"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="popup-cancel" className="font-medium">❌ Abbrechen-Button</Label>
+                  <Input
+                    id="popup-cancel"
+                    value={settings.popup_cancel_button}
+                    onChange={(e) => handleInputChange('popup_cancel_button', e.target.value)}
+                    placeholder="Abbrechen"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label htmlFor="popup-reserve" className="font-medium">✅ Reservieren-Button</Label>
+                  <Input
+                    id="popup-reserve"
+                    value={settings.popup_reserve_button}
+                    onChange={(e) => handleInputChange('popup_reserve_button', e.target.value)}
+                    placeholder="Reservieren"
                   />
                 </div>
               </div>

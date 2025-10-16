@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { WishlistItem } from '@/lib/types'
+import { WishlistItem, ContentSettings } from '@/lib/types'
 import { toast } from 'sonner'
 
 interface ReserveDialogProps {
@@ -13,9 +13,10 @@ interface ReserveDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
+  content: ContentSettings
 }
 
-export default function ReserveDialog({ item, open, onOpenChange, onSuccess }: ReserveDialogProps) {
+export default function ReserveDialog({ item, open, onOpenChange, onSuccess, content }: ReserveDialogProps) {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -46,7 +47,7 @@ export default function ReserveDialog({ item, open, onOpenChange, onSuccess }: R
       }
 
       onSuccess()
-      toast.success('🎉 Yay! Das Geschenk ist jetzt für dich reserviert! Du bekommst gleich eine Bestätigung per E-Mail! 💕')
+      toast.success(content.popup_success_message)
     } catch (error) {
       console.error('Error reserving item:', error)
       toast.error('Ups! Da ist etwas schiefgegangen. Versuche es nochmal! 🥺')
@@ -65,17 +66,17 @@ export default function ReserveDialog({ item, open, onOpenChange, onSuccess }: R
             <span className="text-3xl">✨</span>
           </div>
           <DialogTitle className="text-2xl font-bold text-violet-800">
-            Geschenk reservieren
+            {content.popup_title}
           </DialogTitle>
           <DialogDescription className="text-gray-700 text-base">
-            Hallo du Liebe:r! 🥰 Reserviere dieses tolle Geschenk für unser Baby!
+            {content.popup_welcome_text}
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-3">
             <Label htmlFor="item" className="text-gray-700 font-medium">
-              <span className="text-purple-600">🎯</span> Geschenk
+              <span className="text-purple-600">🎯</span> {content.popup_gift_label}
             </Label>
             <div className="text-lg text-gray-800 p-4 bg-gradient-to-r from-blue-100 to-violet-100 rounded-lg border border-blue-200 font-medium">
               {item.item}
@@ -84,7 +85,7 @@ export default function ReserveDialog({ item, open, onOpenChange, onSuccess }: R
           
           <div className="space-y-3">
             <Label htmlFor="email" className="text-gray-700 font-medium">
-              <span className="text-blue-600">💌</span> Deine E-Mail-Adresse *
+              <span className="text-blue-600">💌</span> {content.popup_email_label}
             </Label>
             <Input
               id="email"
@@ -96,7 +97,7 @@ export default function ReserveDialog({ item, open, onOpenChange, onSuccess }: R
               className="border-2 border-blue-200 focus:border-violet-500 focus:ring-violet-500 text-lg p-3"
             />
             <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-              <span className="text-blue-600">💡</span> Du bekommst eine Bestätigung per E-Mail! 🎉
+              <span className="text-blue-600">💡</span> {content.popup_confirmation_text}
             </p>
           </div>
           
@@ -107,7 +108,7 @@ export default function ReserveDialog({ item, open, onOpenChange, onSuccess }: R
               onClick={() => onOpenChange(false)}
               className="flex-1 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
             >
-              Abbrechen
+              {content.popup_cancel_button}
             </Button>
             <Button
               type="submit"
@@ -122,7 +123,7 @@ export default function ReserveDialog({ item, open, onOpenChange, onSuccess }: R
               ) : (
                 <>
                   <span className="text-lg">🎁</span>
-                  Reservieren
+                  {content.popup_reserve_button}
                 </>
               )}
             </Button>

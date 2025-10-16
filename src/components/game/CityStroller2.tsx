@@ -431,72 +431,48 @@ export default function CityStroller2() {
 
   // Leaderboard
   useEffect(()=>{
-    // load only from local storage
-    try {
-      const raw = localStorage.getItem('cityStrollerLeaderboard')
-      setLeaderboard(raw ? JSON.parse(raw) : [])
-    } catch { setLeaderboard([]) }
-    // react to clears from settings (cross-tab and same-tab)
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'leaderboard:clearedAt') {
-        setLeaderboard([])
-        try{ localStorage.removeItem('cityStrollerLeaderboard') }catch{}
-      }
-    }
-    window.addEventListener('storage', onStorage)
-    const onCustom = () => { setLeaderboard([]); try{ localStorage.removeItem('cityStrollerLeaderboard') }catch{} }
-    window.addEventListener('leaderboard:cleared', onCustom)
-    const refetch = () => { try{ const raw=localStorage.getItem('cityStrollerLeaderboard'); setLeaderboard(raw?JSON.parse(raw):[]) }catch{ setLeaderboard([]) } }
-    window.addEventListener('focus', refetch)
-    const onVisibility = () => { if (document.visibilityState === 'visible') refetch() }
-    document.addEventListener('visibilitychange', onVisibility)
-    // polling fallback for older browsers (e.g., older Safari)
-    const lastClearedAt = { v: typeof window !== 'undefined' ? (localStorage.getItem('leaderboard:clearedAt') || '') : '' }
-    const interval = window.setInterval(() => {
+    const fetchLeaderboard = async () => {
       try {
-        const current = localStorage.getItem('leaderboard:clearedAt') || ''
-        if (current && current !== lastClearedAt.v) {
-          lastClearedAt.v = current
-          setLeaderboard([])
-          try{ localStorage.removeItem('cityStrollerLeaderboard') }catch{}
+        const response = await fetch('/api/leaderboard')
+        if (response.ok) {
+          const data = await response.json()
+          setLeaderboard(data.entries || [])
         }
-      } catch {}
-    }, 1500)
-    let bc: BroadcastChannel | null = null
-    try {
-      bc = new BroadcastChannel('leaderboard')
-      type LeaderboardMessage = { type: 'cleared' } | { type: 'saved'; entries: typeof leaderboard }
-      bc.onmessage = (ev: MessageEvent<LeaderboardMessage>) => {
-        const data = ev.data
-        if (data && data.type === 'cleared') {
-          setLeaderboard([])
-        } else if (data && data.type === 'saved') {
-          setLeaderboard(data.entries)
-        }
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error)
+        setLeaderboard([])
       }
-    } catch {}
-    return () => {
-      window.removeEventListener('storage', onStorage)
-      window.removeEventListener('leaderboard:cleared', onCustom)
-      window.removeEventListener('focus', refetch)
-      document.removeEventListener('visibilitychange', onVisibility)
-      try { window.clearInterval(interval) } catch {}
-      try { bc?.close() } catch {}
     }
+
+    fetchLeaderboard()
   },[])
-  const saveLeaderboard=(entries: typeof leaderboard)=>{
+  const saveLeaderboard = async (entries: typeof leaderboard) => {
     setLeaderboard(entries)
-    try{ localStorage.setItem('cityStrollerLeaderboard', JSON.stringify(entries)) }catch{}
-    try { const bc = new BroadcastChannel('leaderboard'); bc.postMessage({ type:'saved', entries }); bc.close() } catch {}
+    // Save to Supabase
+    try {
+      const response = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: entries[entries.length - 1]?.name || '',
+          timeSeconds: entries[entries.length - 1]?.timeSeconds || 0
+        })
+      })
+      if (!response.ok) {
+        console.error('Failed to save to leaderboard')
+      }
+    } catch (error) {
+      console.error('Error saving to leaderboard:', error)
+    }
   }
-  const handleSaveScore = () => {
+  const handleSaveScore = async () => {
     const name = playerName.trim()
     if (!name) return
     try {
       setSaveState('saving')
       const nowIso = new Date().toISOString()
       const next=[...leaderboard,{name,timeSeconds:elapsedSeconds,dateIso:nowIso}].sort((a,b)=>a.timeSeconds-b.timeSeconds).slice(0,10)
-      saveLeaderboard(next)
+      await saveLeaderboard(next)
       setSaveState('done')
     } catch {
       setSaveState('error')

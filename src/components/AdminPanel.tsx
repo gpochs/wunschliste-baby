@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { WishlistItem } from '@/lib/types'
+import { WishlistItem, LeaderboardEntry } from '@/lib/types'
 import { getItemImageUrl } from '@/lib/itemImage'
 import { supabase } from '@/lib/supabase'
 import AddItemDialog from './AddItemDialog'
@@ -9,7 +9,7 @@ import SettingsPanel from './SettingsPanel'
 import ContentManagementPanel from './ContentManagementPanel'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Edit, Trash2, ExternalLink, Gift, CheckCircle, Plus, LogOut, Settings, ChevronUp, ChevronDown, Type } from 'lucide-react'
+import { Edit, Trash2, ExternalLink, Gift, CheckCircle, Plus, LogOut, Settings, ChevronUp, ChevronDown, Type, Trophy, Trash, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface AdminPanelProps {
@@ -23,10 +23,15 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [showContentManagement, setShowContentManagement] = useState(false)
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
 
   useEffect(() => {
     fetchItems()
-  }, [])
+    if (showLeaderboard) {
+      fetchLeaderboard()
+    }
+  }, [showLeaderboard])
 
   const fetchItems = async () => {
     try {
@@ -188,6 +193,42 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     }
   }
 
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await fetch('/api/leaderboard')
+      if (!response.ok) throw new Error('Failed to fetch leaderboard')
+      const data = await response.json()
+      setLeaderboard(data.entries || [])
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error)
+      toast.error('Ups! Fehler beim Laden der Rangliste! 🥺')
+    }
+  }
+
+  const clearLeaderboard = async () => {
+    if (!confirm('Möchtest du wirklich alle Einträge der Rangliste löschen? Das kann nicht rückgängig gemacht werden!')) {
+      return
+    }
+
+    try {
+      const response = await fetch('/api/leaderboard', { method: 'DELETE' })
+      if (!response.ok) throw new Error('Failed to clear leaderboard')
+      
+      toast.success('🗑️ Rangliste wurde geleert! ✨')
+      fetchLeaderboard()
+    } catch (error) {
+      console.error('Error clearing leaderboard:', error)
+      toast.error('Ups! Fehler beim Löschen der Rangliste! 🥺')
+    }
+  }
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.floor(seconds % 60)
+    const milliseconds = Math.floor((seconds % 1) * 1000)
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`
+  }
+
   const renderItem = (item: WishlistItem, index: number, itemsList: WishlistItem[]) => (
     <Card key={item.id} className={`mb-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 ${
       item.reserved 
@@ -337,6 +378,103 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     return <ContentManagementPanel onBack={() => setShowContentManagement(false)} />
   }
 
+  if (showLeaderboard) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <Trophy className="h-8 w-8 text-amber-500" />
+            Rangliste verwalten
+          </h1>
+          <Button
+            onClick={() => setShowLeaderboard(false)}
+            variant="outline"
+            className="border-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Zurück zum Admin
+          </Button>
+        </div>
+
+        <Card className="bg-white shadow-2xl border-0 overflow-hidden mb-6">
+          <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white p-6">
+            <CardTitle className="text-2xl font-bold flex items-center gap-3">
+              <Trophy className="h-7 w-7" />
+              Spiel-Rangliste
+            </CardTitle>
+            <p className="text-amber-100 mt-2">
+              Hier siehst du alle Einträge der City Stroller Rangliste. Du kannst die gesamte Rangliste löschen.
+            </p>
+          </CardHeader>
+          
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div className="text-lg font-semibold text-gray-700">
+                {leaderboard.length} Einträge gefunden
+              </div>
+              <Button
+                onClick={clearLeaderboard}
+                variant="outline"
+                className="border-2 border-red-500 text-red-600 hover:bg-red-50"
+                disabled={leaderboard.length === 0}
+              >
+                <Trash className="h-4 w-4 mr-2" />
+                Alle löschen
+              </Button>
+            </div>
+
+            {leaderboard.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Trophy className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-xl">Keine Einträge in der Rangliste</p>
+                <p className="text-sm mt-2">Spiele das City Stroller Spiel, um Einträge zu erstellen!</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {leaderboard.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    className={`flex items-center justify-between p-4 rounded-lg border-2 ${
+                      index === 0 
+                        ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300' 
+                        : index < 3 
+                        ? 'bg-gradient-to-r from-gray-50 to-blue-50 border-blue-200'
+                        : 'bg-gray-50 border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                        index === 0 
+                          ? 'bg-yellow-400 text-yellow-900' 
+                          : index < 3 
+                          ? 'bg-blue-400 text-blue-900'
+                          : 'bg-gray-400 text-gray-900'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-gray-800">{entry.name}</div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(entry.date_iso).toLocaleDateString('de-DE')} um {new Date(entry.date_iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-gray-800">
+                        {formatTime(entry.time_seconds)}
+                      </div>
+                      <div className="text-sm text-gray-500">Zeit</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -371,6 +509,15 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
           >
             <Type className="h-5 w-5 mr-2" />
             Inhalte bearbeiten
+          </Button>
+          
+          <Button
+            onClick={() => setShowLeaderboard(true)}
+            variant="outline"
+            className="border-2 border-amber-600 text-amber-600 hover:bg-amber-50 px-6 py-3 flex-1 sm:flex-none"
+          >
+            <Trophy className="h-5 w-5 mr-2" />
+            Rangliste verwalten
           </Button>
           
           <Button

@@ -26,6 +26,14 @@ export interface AdminSession {
   password: string
 }
 
+export interface LeaderboardEntry {
+  id: string
+  name: string
+  time_seconds: number
+  date_iso: string
+  created_at: string
+}
+
 export interface ContentSettings {
   landing_page_title: string
   landing_page_welcome_text: string
@@ -40,4 +48,12 @@ export interface ContentSettings {
   email_parent_subject: string
   email_parent_message: string
   email_parent_signature: string
+  popup_title: string
+  popup_welcome_text: string
+  popup_gift_label: string
+  popup_email_label: string
+  popup_confirmation_text: string
+  popup_cancel_button: string
+  popup_reserve_button: string
+  popup_success_message: string
 }
