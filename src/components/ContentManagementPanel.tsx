@@ -75,6 +75,14 @@ export default function ContentManagementPanel({ onBack }: ContentManagementPane
           email_parent_subject: data.email_parent_subject || DEFAULT_SETTINGS.email_parent_subject,
           email_parent_message: data.email_parent_message || DEFAULT_SETTINGS.email_parent_message,
           email_parent_signature: data.email_parent_signature || DEFAULT_SETTINGS.email_parent_signature,
+          popup_title: data.popup_title || DEFAULT_SETTINGS.popup_title,
+          popup_welcome_text: data.popup_welcome_text || DEFAULT_SETTINGS.popup_welcome_text,
+          popup_gift_label: data.popup_gift_label || DEFAULT_SETTINGS.popup_gift_label,
+          popup_email_label: data.popup_email_label || DEFAULT_SETTINGS.popup_email_label,
+          popup_confirmation_text: data.popup_confirmation_text || DEFAULT_SETTINGS.popup_confirmation_text,
+          popup_cancel_button: data.popup_cancel_button || DEFAULT_SETTINGS.popup_cancel_button,
+          popup_reserve_button: data.popup_reserve_button || DEFAULT_SETTINGS.popup_reserve_button,
+          popup_success_message: data.popup_success_message || DEFAULT_SETTINGS.popup_success_message,
         })
       }
     } catch (error) {
