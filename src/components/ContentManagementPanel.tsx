@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Save, ArrowLeft, Image as ImageIcon, Mail, Type, Eye } from 'lucide-react'
+import { Save, ArrowLeft, Image as ImageIcon, Mail, Type } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { ContentSettings } from '@/lib/types'
@@ -270,7 +270,7 @@ export default function ContentManagementPanel({ onBack }: ContentManagementPane
               {/* Section Titles */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <Label htmlFor="available" className="font-medium">🎁 Titel "Verfügbare Items"</Label>
+                  <Label htmlFor="available" className="font-medium">🎁 Titel &quot;Verfügbare Items&quot;</Label>
                   <Input
                     id="available"
                     value={settings.section_available_title}
@@ -279,7 +279,7 @@ export default function ContentManagementPanel({ onBack }: ContentManagementPane
                 </div>
 
                 <div className="space-y-3">
-                  <Label htmlFor="reserved" className="font-medium">✅ Titel "Reservierte Items"</Label>
+                  <Label htmlFor="reserved" className="font-medium">✅ Titel &quot;Reservierte Items&quot;</Label>
                   <Input
                     id="reserved"
                     value={settings.section_reserved_title}

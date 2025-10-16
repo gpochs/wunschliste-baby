@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { resend } from '@/lib/resend'
 
 // Helper function to replace placeholders in templates
-function replacePlaceholders(template: string, item: any, email: string): string {
+function replacePlaceholders(template: string, item: { item?: string; size?: string; color?: string }, email: string): string {
   return template
     .replace(/{item_name}/g, item.item || '')
     .replace(/{item_size}/g, item.size || '')
